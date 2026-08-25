@@ -1,0 +1,54 @@
+FACIL AUTO — PULSO ANIMADO v1.5.27
+
+PAQUETE INCREMENTAL
+
+ARCHIVOS
+- index.html
+- servicios-auth.js
+- assets/css/hero-market.css
+- assets/js/hero-market-animate-v1.5.27.js
+- INSTRUCCIONES.txt
+
+CAMBIOS
+
+1. ANIMACIÓN DE CIFRAS
+Los 3 números del "Pulso del mercado" ahora:
+- empiezan en 0;
+- incrementan hasta su valor real al entrar en pantalla;
+- se activan una sola vez;
+- respetan prefers-reduced-motion.
+
+2. VECTORES / FLECHAS
+Se agregan SVG de tendencia:
+- flecha de subida en turquesa #01A5BC;
+- flecha de bajada en naranja #e94f32;
+- microindicadores editoriales dentro de cada estadística;
+- dupla de vectores en el encabezado del bloque.
+
+3. AJUSTE VISUAL
+- mejor jerarquía del título del bloque;
+- chips de lectura ("Movimiento mensual", "Acumulado 2026", "Lectura de ranking");
+- pequeñas animaciones visuales al disparar el conteo.
+
+NO SE MODIFICA
+- calculadora
+- app.js
+- seguros
+- créditos
+- pagos
+- Worker
+- D1
+- SQL
+
+INSTALACIÓN
+
+Subir TODO dentro de:
+/facilauto/
+
+respetando carpetas.
+
+Después:
+Ctrl + F5
+
+VERSIÓN
+v1.5.27

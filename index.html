@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Calculá cuánto vale un auto usado, transferencia, costo final, financiación y oportunidad de compra en Argentina con FACIL AUTO.">
+  <meta name="theme-color" content="#111111">
+  <title>FACIL AUTO | Valuación, transferencia y costo real de un auto usado</title>
+  <link rel="canonical" href="https://emanuelmkt.com.ar/facilauto/">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/result-icons-v1.5.5.css?v=1.5.6">
+  <link rel="stylesheet" href="assets/css/index-magic.css?v=1.5.18">
+  <link rel="stylesheet" href="assets/css/mobile-polish.css?v=1.5.19">
+  <link rel="stylesheet" href="assets/css/hero-market.css?v=1.5.27">
+
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"WebApplication",
+        "name":"FACIL AUTO",
+        "url":"https://emanuelmkt.com.ar/facilauto/",
+        "applicationCategory":"FinanceApplication",
+        "operatingSystem":"Web",
+        "description":"Herramienta orientativa para valuación de autos usados, transferencia, costo de cierre, financiación y análisis de oportunidad en Argentina."
+      },
+      {
+        "@type":"FAQPage",
+        "mainEntity":[
+          {
+            "@type":"Question",
+            "name":"¿Cómo saber cuánto vale mi auto usado?",
+            "acceptedAnswer":{"@type":"Answer","text":"FACIL AUTO utiliza marca, modelo, versión, año y kilometraje para construir una referencia orientativa a partir de información oficial y referencias del mercado."}
+          },
+          {
+            "@type":"Question",
+            "name":"¿El kilometraje cambia el valor de un auto usado?",
+            "acceptedAnswer":{"@type":"Answer","text":"Sí. El kilometraje se utiliza para ajustar la referencia; por encima de 100.000 km la depreciación modelada aumenta progresivamente."}
+          },
+          {
+            "@type":"Question",
+            "name":"¿Cuánto cuesta transferir un auto?",
+            "acceptedAnswer":{"@type":"Answer","text":"El costo depende de valuación, jurisdicción, tipo de comprador y conceptos registrales. FACIL AUTO ofrece una estimación orientativa."}
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script>
+    if (new URLSearchParams(location.search).get('embed') === '1') {
+      document.documentElement.classList.add('fa-embedded-tool');
+    }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="#top" aria-label="FACIL AUTO inicio">
+      <strong>FACIL <span>AUTO</span></strong>
+      <small>OPERACIÓN AUTOMOTOR</small>
+    </a>
+    <nav class="topnav" aria-label="Principal">
+      <a href="#calculadora">Calcular</a>
+      <a href="#que-calcula">Qué calcula</a>
+      <a href="#metodologia">Método</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="top-cta" data-auth-entry href="https://facilauto-auth.emanuelastudillo.workers.dev/auth/google?return_to=https%3A%2F%2Femanuelmkt.com.ar%2Ffacilauto%2F">INGRESAR</a>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-main">
+        <div class="hero-index">01 — VALUACIÓN + CIERRE</div>
+        <h1>Antes de comprar un auto,<br><span>mirá todos los números.</span></h1>
+        <p>Precio de referencia, oportunidad de compra, financiación, transferencia y costo final. Una sola ficha para entender si la operación cierra.</p>
+
+        <div class="hero-market-pulse" aria-label="Pulso del mercado argentino de autos usados">
+          <div class="hero-market-pulse-head">
+            <div class="hero-market-pulse-title">
+              <span>PULSO DEL MERCADO · JULIO 2026</span>
+              <small>Argentina · vehículos usados</small>
+            </div>
+            <div class="hero-market-vectors" aria-hidden="true">
+              <span class="hero-market-vector is-up">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5 16.5 15.6 5.9h-5.1V4H19v8.5h-1.9V7.2L6.5 17.8z"></path>
+                </svg>
+              </span>
+              <span class="hero-market-vector is-down">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5 7.5 15.6 18.1h-5.1V20H19v-8.5h-1.9v5.3L6.5 6.2z"></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+          <div class="hero-market-stats">
+            <div class="hero-market-stat hero-market-stat-main">
+              <div class="hero-market-chip is-up">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5 16.5 15.6 5.9h-5.1V4H19v8.5h-1.9V7.2L6.5 17.8z"></path>
+                </svg>
+                <small>Movimiento mensual</small>
+              </div>
+              <strong data-market-count="156810">156.810</strong>
+              <span>usados comercializados en julio</span>
+            </div>
+            <div class="hero-market-stat">
+              <div class="hero-market-chip is-up">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5 16.5 15.6 5.9h-5.1V4H19v8.5h-1.9V7.2L6.5 17.8z"></path>
+                </svg>
+                <small>Acumulado 2026</small>
+              </div>
+              <strong data-market-count="1048438">1.048.438</strong>
+              <span>operaciones entre enero y julio</span>
+            </div>
+            <div class="hero-market-stat">
+              <div class="hero-market-chip is-down">
+                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <path d="M5 7.5 15.6 18.1h-5.1V20H19v-8.5h-1.9v5.3L6.5 6.2z"></path>
+                </svg>
+                <small>Lectura de ranking</small>
+              </div>
+              <strong data-market-count="8276">8.276</strong>
+              <span>Gol / Trend · líder usado del mes</span>
+            </div>
+          </div>
+          <p>Datos públicos del mercado automotor argentino. Actualización mensual.</p>
+        </div>
+
+        <a class="hero-link" href="#calculadora">Calcular mi vehículo <span>↘</span></a>
+      </div>
+      <aside class="hero-data" aria-label="Datos utilizados">
+        <div class="data-line"><span>Mercado automotor</span><b id="hero-market-date">Actualizado</b></div>
+        <div class="data-line"><span>Datos oficiales</span><b id="hero-dnrpa-date">Vigentes</b></div>
+        <div class="data-line"><span>Financiación</span><b id="hero-rates-count">— bancos</b></div>
+        <p>Las estimaciones combinan datos oficiales, relevamientos del mercado automotor y consultas realizadas a agencias y usuarios.</p>
+      </aside>
+    </section>
+
+    <section class="calculator-section" id="calculadora">
+      <div class="shell">
+        <div class="section-title">
+          <span>02</span>
+          <div><p>CALCULADORA</p><h2>Armá la ficha del vehículo.</h2></div>
+        </div>
+
+        <form id="vehicle-form" class="calc-layout">
+          <div class="calc-block">
+            <div class="block-head"><b>A</b><div><span>Vehículo</span><small>El catálogo combina datos oficiales y relevamientos del mercado automotor para ampliar la cobertura.</small></div></div>
+            <div class="field-grid vehicle-fields">
+              <label><span>Marca</span><select id="brand" required><option value="">Cargando marcas...</option></select></label>
+              <label><span>Modelo</span><select id="model" required disabled><option value="">Primero elegí marca</option></select></label>
+              <label class="field-wide"><span>Versión</span><select id="variant" required disabled><option value="">Primero elegí modelo</option></select></label>
+              <label><span>Año</span><select id="year" required disabled><option value="">Elegí versión</option></select></label>
+              <label><span>Kilometraje</span><div class="input-suffix"><input id="km" type="number" min="0" step="1000" placeholder="90.000"><i>km</i></div></label>
+              <p class="coverage-note" id="catalog-coverage" data-tone="neutral">El catálogo combina datos oficiales y relevamientos del mercado automotor para ampliar marcas, modelos y versiones.</p>
+            </div>
+          </div>
+
+          <div class="calc-block operation-block">
+            <div class="block-head"><b>B</b><div><span>Operación</span><small>El precio pactado permite medir la oportunidad real de compra.</small></div></div>
+            <div class="field-grid operation-fields">
+              <label><span>Precio publicado / pactado</span><div class="input-prefix"><i>$</i><input id="operation-price" type="number" min="0" step="10000" placeholder="Ej. 14.000.000"></div></label>
+              <label><span>Anticipo</span><div class="input-prefix"><i>$</i><input id="down-payment" type="number" min="0" step="10000" placeholder="50% sugerido"></div></label>
+              <label><span>Plazo</span><select id="term"><option>12</option><option>24</option><option selected>36</option><option>48</option><option>60</option><option>72</option></select></label>
+              <label><span>Comprador</span><select id="buyer-type"><option value="particular">Particular</option><option value="habitualist">Agencia habitualista</option></select></label>
+              <label><span>Seguridad de tu zona</span><select id="security-zone"><option value="very-unsafe">Muy inseguro</option><option value="unsafe">Inseguro</option><option value="normal" selected>Normal</option><option value="safe">Seguro</option><option value="very-safe">Muy seguro</option></select></label>
+            </div>
+            <details class="settings">
+              <summary>Ajustes y supuestos</summary>
+              <div class="settings-grid">
+                <label><span>Dólar de referencia</span><div class="input-prefix small"><i>$</i><input id="fx-rate" type="number" min="1" step="1"></div></label>
+                <label><span>Jurisdicción</span><select id="jurisdiction"><option value="pba">Provincia de Buenos Aires</option><option value="other">Otra / sin sellos configurados</option></select></label>
+              </div>
+            </details>
+          </div>
+
+          <div class="calc-submit">
+            <p id="data-status">Cargando fuentes...</p>
+            <button type="submit">CALCULAR OPERACIÓN <span>INGRESAR →</span></button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="results-section" id="resultados" hidden>
+      <div class="shell">
+        <div class="section-title result-title">
+          <span>03</span>
+          <div><p>RESULTADO</p><h2 id="result-unit">Operación</h2></div>
+        </div>
+
+        <div class="opportunity-panel" id="opportunity-panel">
+          <div class="opportunity-label">
+            <small>LECTURA DE OPORTUNIDAD</small>
+            <strong id="opportunity-rating">Ingresá un precio para comparar</strong>
+            <p id="opportunity-text">Ingresá el precio publicado o pactado para compararlo con la referencia de mercado.</p>
+          </div>
+          <div class="opportunity-number">
+            <span id="opportunity-pct">—</span>
+            <small id="opportunity-direction">vs. mercado</small>
+          </div>
+          <div class="opportunity-bar" aria-hidden="true">
+            <div class="bar-scale"><span>-20%</span><span>-10%</span><span>0</span><span>+10%</span><span>+20%</span></div>
+            <div class="bar-track"><i class="bar-center"></i><b id="opportunity-marker"></b></div>
+          </div>
+        </div>
+
+        <div class="result-strips">
+          <details class="result-strip valuation-strip">
+            <summary>
+              <span class="strip-index">01</span>
+              <span class="fa-result-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path d="M8 35V16l16-8 16 8v19"/><path d="M14 35V20h20v15"/><path d="M18 28h12"/><circle cx="24" cy="20" r="3"/><path d="M7 40h34"/></svg>
+    </span>
+              <div class="strip-copy"><small>VALUACIÓN</small><strong>Precio de referencia</strong></div>
+              <div class="strip-primary"><strong id="market-value">—</strong><small id="market-confidence-short">Referencia estimada</small></div>
+              <span class="strip-toggle" aria-hidden="true">+</span>
+            </summary>
+            <div class="strip-detail">
+              <div class="detail-lead" id="market-adjustment">—</div>
+              <dl class="data-list compact-list">
+                <div><dt>Valor de referencia</dt><dd id="market-pdf-value">—</dd></div>
+                <div><dt>Base utilizada</dt><dd id="market-pdf-unit">—</dd></div>
+                <div><dt>Confianza de valuación</dt><dd id="market-confidence">—</dd></div>
+                <div><dt>Método</dt><dd id="market-method">—</dd></div>
+                <div><dt>Toma orientativa</dt><dd id="buy-value">—</dd></div>
+                <div><dt>Venta orientativa</dt><dd id="sale-value">—</dd></div>
+              </dl>
+              <footer id="market-source"></footer>
+            </div>
+          </details>
+
+          <details class="result-strip transfer-strip">
+            <summary>
+              <span class="strip-index">02</span>
+              <span class="fa-result-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path d="M8 15h25"/><path d="m28 10 5 5-5 5"/><path d="M40 33H15"/><path d="m20 28-5 5 5 5"/><rect x="13" y="21" width="22" height="7" rx="2"/></svg>
+    </span>
+              <div class="strip-copy"><small>TRANSFERENCIA</small><strong>Registro + sellos</strong></div>
+              <div class="strip-primary"><strong id="transfer-total">—</strong><small id="dnrpa-status-short">Estimado</small></div>
+              <span class="strip-toggle" aria-hidden="true">+</span>
+            </summary>
+            <div class="strip-detail">
+              <div class="detail-lead" id="dnrpa-match">—</div>
+              <dl class="data-list compact-list">
+                <div><dt>Valuación oficial</dt><dd id="dnrpa-value">—</dd></div>
+                <div><dt>Estado de valuación</dt><dd id="dnrpa-status">—</dd></div>
+                <div><dt>Arancel registral</dt><dd id="registry-fee">—</dd></div>
+                <div><dt>Sellos</dt><dd id="stamp-fee">—</dd></div>
+                <div><dt>Fijos modelados</dt><dd id="fixed-fees">—</dd></div>
+              </dl>
+              <footer id="dnrpa-source">Datos oficiales vigentes</footer>
+            </div>
+          </details>
+
+          <details class="result-strip close-strip">
+            <summary>
+              <span class="strip-index">03</span>
+              <span class="fa-result-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path d="M10 12h28v24H10z"/><path d="M10 18h28"/><path d="M16 27h8"/><path d="M16 32h15"/><circle cx="33" cy="27" r="2"/></svg>
+    </span>
+              <div class="strip-copy"><small>CIERRE</small><strong>Cuánto necesitás</strong></div>
+              <div class="strip-primary"><strong id="cash-close">—</strong><small>Contado + transferencia</small></div>
+              <span class="strip-toggle" aria-hidden="true">+</span>
+            </summary>
+            <div class="strip-detail close-detail">
+              <div class="close-lines compact-close-lines">
+                <div><small>Anticipo + financiación + transferencia</small><strong id="finance-close">—</strong><span id="finance-close-bank">—</span></div>
+              </div>
+              <div class="close-summary"><span>Precio usado para la operación</span><b id="operation-used">—</b></div>
+            </div>
+          </details>
+
+          <details class="result-strip finance-strip">
+            <summary>
+              <span class="strip-index">04</span>
+              <span class="fa-result-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path d="M7 18 24 8l17 10"/><path d="M10 20h28"/><path d="M13 20v15M21 20v15M29 20v15M37 20v15"/><path d="M8 36h32M6 40h36"/></svg>
+    </span>
+              <div class="strip-copy"><small>FINANCIACIÓN</small><strong>Alternativas bancarias</strong></div>
+              <div class="strip-primary"><strong id="finance-primary">—</strong><small id="finance-primary-label">cuota/mes · menor CFT</small></div>
+              <span class="strip-toggle" aria-hidden="true">+</span>
+            </summary>
+            <div class="strip-detail finance-detail">
+              <div class="finance-meta"><span>Monto financiado</span><b id="loan-amount">—</b></div>
+              <div class="bank-table-head"><span>Banco / producto</span><span>TNA</span><span>CFT TEA</span><span>Total</span><span>Cuota aprox.</span></div>
+              <div class="bank-list" id="bank-list"></div>
+              <p class="finance-note" id="finance-source"></p>
+            </div>
+          </details>
+
+          <details class="result-strip insurance-strip">
+            <summary>
+              <span class="strip-index">05</span>
+              <span class="fa-result-icon" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path d="M24 6 38 11v11c0 9-5.5 15.6-14 20-8.5-4.4-14-11-14-20V11z"/><path d="m17 24 5 5 10-11"/></svg>
+    </span>
+              <div class="strip-copy"><small>SEGURO</small><strong id="insurance-primary-name">Terceros completo</strong></div>
+              <div class="strip-primary"><strong id="insurance-primary-value">—</strong><small>por mes · estimado</small></div>
+              <span class="strip-toggle" aria-hidden="true">+</span>
+            </summary>
+            <div class="strip-detail insurance-detail">
+              <p class="insurance-intro">La estimación se calcula con el valor del vehículo, la cobertura elegida, la antigüedad y el nivel de seguridad de tu zona.</p>
+              <div class="insurance-options" role="radiogroup" aria-label="Cobertura estimada">
+                <label class="insurance-option"><input type="radio" name="insurance" value="Responsabilidad Civil" data-range=""><span><b>Responsabilidad Civil</b><small>Se estima al calcular el vehículo</small></span></label>
+                <label class="insurance-option"><input type="radio" name="insurance" value="Terceros completo" data-range="" checked><span><b>Terceros completo</b><small>Se estima al calcular el vehículo</small></span></label>
+                <label class="insurance-option"><input type="radio" name="insurance" value="Todo Riesgo" data-range=""><span><b>Todo Riesgo</b><small>Se estima al calcular el vehículo</small></span></label>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <p class="legal-note">Los resultados son orientativos. Cuando no existe un valor exacto de mercado o DNRPA, la interfaz lo identifica como estimado e informa el método utilizado. La curva de kilometraje, las bandas de toma/venta y el margen comercial de la lectura de oportunidad son reglas internas configurables. Tasas, aranceles, sellos y valuaciones oficiales pueden cambiar antes de cerrar la operación.</p>
+      </div>
+    </section>
+
+
+    <section class="magic-capabilities" id="que-calcula">
+      <div class="shell">
+        <div class="magic-section-head magic-reveal">
+          <div>
+            <span class="magic-kicker">UNA CONSULTA · CINCO LECTURAS</span>
+            <h2>No es solo cuánto vale.<br><span>Es entender la operación.</span></h2>
+          </div>
+          <p>FACIL AUTO reúne en una misma ficha los números que suelen estar separados cuando comprás o vendés un usado.</p>
+        </div>
+
+        <div class="magic-capability-list">
+          <a class="magic-capability magic-reveal" href="#calculadora">
+            <span class="magic-number">01</span>
+            <div><small>VALUACIÓN</small><strong>Precio de referencia</strong><p>Una referencia orientativa según vehículo, año, versión y kilometraje.</p></div>
+            <b>↗</b>
+          </a>
+          <a class="magic-capability magic-reveal" href="#calculadora">
+            <span class="magic-number">02</span>
+            <div><small>TRANSFERENCIA</small><strong>Registro + sellos</strong><p>Estimación de los costos necesarios para cambiar la titularidad.</p></div>
+            <b>↗</b>
+          </a>
+          <a class="magic-capability magic-reveal" href="#calculadora">
+            <span class="magic-number">03</span>
+            <div><small>CIERRE</small><strong>Cuánto necesitás realmente</strong><p>Precio del vehículo más los costos necesarios para completar la operación.</p></div>
+            <b>↗</b>
+          </a>
+          <a class="magic-capability magic-reveal" href="#calculadora">
+            <span class="magic-number">04</span>
+            <div><small>FINANCIACIÓN</small><strong>Alternativas para completar la compra</strong><p>Comparación orientativa de cuotas, tasas y costo total según el monto a financiar.</p></div>
+            <b>↗</b>
+          </a>
+          <a class="magic-capability magic-reveal" href="#calculadora">
+            <span class="magic-number">05</span>
+            <div><small>OPORTUNIDAD</small><strong>El precio puesto en contexto</strong><p>Compará el valor publicado o pactado contra la referencia calculada.</p></div>
+            <b>↗</b>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-stats" aria-label="FACIL AUTO en números">
+      <div class="shell magic-stats-grid">
+        <div class="magic-stats-brand magic-reveal" data-magic-parallax>
+          <img src="assets/brand/facil-auto-isotipo.png" alt="" aria-hidden="true">
+          <span>FACIL AUTO EN NÚMEROS</span>
+          <p>Una lectura rápida antes de tomar una decisión que suele involucrar millones.</p>
+        </div>
+
+        <div class="magic-stat magic-reveal">
+          <small>MÓDULOS</small>
+          <strong data-count="5" data-pad="2">05</strong>
+          <span>lecturas en una ficha</span>
+        </div>
+
+        <div class="magic-stat magic-reveal">
+          <small>CURVA DE KM</small>
+          <strong data-count="400000">400.000</strong>
+          <span>km modelados</span>
+        </div>
+
+        <div class="magic-stat magic-reveal">
+          <small>CAPAS DE INFORMACIÓN</small>
+          <strong data-count="3" data-pad="2">03</strong>
+          <span>mercado + oficial + financiación</span>
+        </div>
+
+        <div class="magic-stat magic-stat-live magic-reveal">
+          <small>FINANCIACIÓN</small>
+          <strong id="magic-rates-count">—</strong>
+          <span>alternativas cargadas</span>
+          <i aria-hidden="true"></i>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-process" id="como-funciona">
+      <div class="shell">
+        <div class="magic-section-head magic-reveal">
+          <div>
+            <span class="magic-kicker">CÓMO FUNCIONA</span>
+            <h2>Tres pasos.<br><span>Una decisión más clara.</span></h2>
+          </div>
+          <p>No necesitás conocer fórmulas ni buscar cada dato por separado. Completás la ficha y FACIL AUTO ordena la operación.</p>
+        </div>
+
+        <div class="magic-process-grid">
+          <article class="magic-process-step magic-reveal">
+            <span>01</span>
+            <small>IDENTIFICÁ</small>
+            <h3>Elegí el vehículo.</h3>
+            <p>Marca, modelo, versión, año y kilometraje para ubicar la unidad dentro de referencias comparables.</p>
+          </article>
+          <article class="magic-process-step magic-reveal">
+            <span>02</span>
+            <small>CONTEXTUALIZÁ</small>
+            <h3>Sumá la operación.</h3>
+            <p>Precio pactado, anticipo, plazo, tipo de comprador y zona para ajustar la lectura.</p>
+          </article>
+          <article class="magic-process-step magic-reveal">
+            <span>03</span>
+            <small>DECIDÍ</small>
+            <h3>Mirá el número completo.</h3>
+            <p>Valuación, oportunidad, transferencia, cierre y financiación en un único resultado.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-demo">
+      <div class="shell magic-demo-grid">
+        <div class="magic-demo-copy magic-reveal">
+          <span class="magic-kicker">ASÍ SE LEE</span>
+          <h2>Un precio solo<br><span>no cuenta toda la historia.</span></h2>
+          <p>El objetivo no es darte un número aislado, sino mostrar cómo se relaciona el valor del vehículo con los gastos y el cierre de la operación.</p>
+          <a href="#calculadora">PROBAR CON UN VEHÍCULO <span>→</span></a>
+        </div>
+
+        <div class="magic-demo-card magic-reveal" aria-label="Ejemplo visual de resultado">
+          <header>
+            <div>
+              <small>EJEMPLO VISUAL · NO ES UNA COTIZACIÓN</small>
+              <strong>SUV compacta · 2019 · 86.000 km</strong>
+            </div>
+            <span>DEMO</span>
+          </header>
+
+          <div class="magic-demo-opportunity">
+            <div>
+              <small>LECTURA</small>
+              <strong>Dentro de mercado</strong>
+            </div>
+            <b>−4,3%</b>
+          </div>
+
+          <div class="magic-demo-meter" aria-hidden="true">
+            <span>MEJOR COMPRA</span>
+            <i><b></b></i>
+            <span>PRECIO ALTO</span>
+          </div>
+
+          <dl>
+            <div><dt>Referencia estimada</dt><dd>$20,8 M</dd></div>
+            <div><dt>Precio del ejemplo</dt><dd>$19,9 M</dd></div>
+            <div><dt>Transferencia estimada</dt><dd>$650 mil</dd></div>
+            <div class="magic-demo-total"><dt>Para cerrar</dt><dd>$20,55 M</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-audiences">
+      <div class="shell">
+        <div class="magic-section-head magic-reveal">
+          <div>
+            <span class="magic-kicker">SEGÚN TU MOMENTO</span>
+            <h2>La misma base.<br><span>Preguntas distintas.</span></h2>
+          </div>
+          <p>Podés entrar por la calculadora completa o por páginas específicas según lo que estés intentando resolver.</p>
+        </div>
+
+        <div class="magic-audience-grid">
+          <a class="magic-audience magic-reveal" href="quiero-comprar-un-auto/">
+            <small>COMPRAR</small>
+            <h3>¿Este auto está bien de precio?</h3>
+            <p>Compará el precio publicado y estimá cuánto necesitás para completar la compra.</p>
+            <span>VER HERRAMIENTA →</span>
+          </a>
+          <a class="magic-audience magic-reveal" href="quiero-vender-mi-auto/">
+            <small>VENDER</small>
+            <h3>¿Cuánto puedo pedir por mi auto?</h3>
+            <p>Usá vehículo, año y kilometraje para construir una referencia antes de publicarlo.</p>
+            <span>VER HERRAMIENTA →</span>
+          </a>
+          <a class="magic-audience magic-reveal" href="calculadora-auto-usado/">
+            <small>OPERACIÓN COMPLETA</small>
+            <h3>Quiero mirar todos los números.</h3>
+            <p>Valuación, transferencia, cierre, financiación y contexto de precio en una misma ficha.</p>
+            <span>ABRIR CALCULADORA →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-trust">
+      <div class="shell magic-trust-grid">
+        <div class="magic-trust-title magic-reveal">
+          <span class="magic-kicker">UNA REFERENCIA, NO UNA PROMESA</span>
+          <h2>Datos para decidir.<br><span>Criterio para cerrar.</span></h2>
+        </div>
+        <div class="magic-trust-copy magic-reveal">
+          <p>FACIL AUTO combina referencias de mercado, información oficial y parámetros de operación para construir una estimación útil. Cuando no hay una coincidencia exacta, el sistema utiliza vehículos comparables e informa el nivel de confianza.</p>
+          <p>No reemplaza una inspección mecánica, una tasación presencial ni la liquidación definitiva del Registro. Sirve para llegar a esas instancias con más contexto y menos números sueltos.</p>
+          <div class="magic-data-pulse">
+            <span><i></i> DATOS DE LA HERRAMIENTA</span>
+            <b id="magic-data-state">Sincronizando…</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-faq" id="faq">
+      <div class="shell magic-faq-grid">
+        <div class="magic-faq-title magic-reveal">
+          <span class="magic-kicker">PREGUNTAS FRECUENTES</span>
+          <h2>Antes de<br><span>hacer la cuenta.</span></h2>
+        </div>
+
+        <div class="magic-faq-list">
+          <details class="magic-reveal">
+            <summary>¿Cómo saber cuánto vale mi auto usado?<span>+</span></summary>
+            <p>Seleccioná marca, modelo, versión y año. Si agregás kilometraje, FACIL AUTO ajusta la referencia para representar mejor el estado de uso de la unidad.</p>
+          </details>
+          <details class="magic-reveal">
+            <summary>¿El kilometraje cambia mucho el valor?<span>+</span></summary>
+            <p>Sí, pero no de forma lineal. Hasta 100.000 km se considera una zona habitual de uso; por encima de ese punto la depreciación se vuelve progresivamente más importante.</p>
+          </details>
+          <details class="magic-reveal">
+            <summary>¿Cuánto cuesta transferir un auto?<span>+</span></summary>
+            <p>Depende de la valuación aplicable, jurisdicción, tipo de comprador y otros conceptos registrales. La calculadora muestra una estimación para dimensionar el gasto antes de cerrar.</p>
+          </details>
+          <details class="magic-reveal">
+            <summary>¿El resultado es un valor oficial?<span>+</span></summary>
+            <p>No. Es una estimación orientativa construida con información oficial y referencias del mercado. El valor definitivo de una operación depende de la unidad y de las condiciones reales de compra o venta.</p>
+          </details>
+          <details class="magic-reveal">
+            <summary>¿Qué gastos hay además del precio del auto?<span>+</span></summary>
+            <p>La transferencia es uno de los principales. También pueden existir verificación, deudas, multas, gestoría, seguro, mantenimiento inicial u otros costos que dependen de cada operación.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="magic-instagram">
+      <a class="shell magic-instagram-inner magic-reveal" href="https://www.instagram.com/facilauto.ok" target="_blank" rel="noopener noreferrer">
+        <div>
+          <span class="magic-kicker">FACIL AUTO · EN INSTAGRAM</span>
+          <h2>Autos usados,<br><span>pero con contexto.</span></h2>
+        </div>
+        <div class="magic-instagram-cta">
+          <small>@facilauto.ok</small>
+          <strong>SEGUIR →</strong>
+        </div>
+      </a>
+    </section>
+
+    <section class="method-section" id="metodologia">
+      <div class="shell method-grid">
+        <div class="section-title"><span>04</span><div><p>METODOLOGÍA</p><h2>Qué está mirando el cálculo.</h2></div></div>
+        <div class="method-list">
+          <article><b>REFERENCIA DE VALOR</b><p>La valuación combina datos oficiales, relevamientos de mercado y referencias comparables. Cuando no existe una referencia directa, se aplican métodos estadísticos sobre vehículos equivalentes.</p></article>
+          <article><b>KILOMETRAJE</b><p>Hasta 100.000 km el valor se mantiene dentro de una zona normal de usado, con una mejora leve para unidades de muy bajo kilometraje. Desde 100.000 hasta 400.000 km se aplica una depreciación exponencial progresiva, limitada al 30%. La valuación original siempre queda visible.</p></article>
+          <article><b>OPORTUNIDAD</b><p>Compara el precio publicado o pactado contra la guía con una corrección de 10 puntos porcentuales en la lectura de oportunidad. El valor guía original no se modifica.</p></article>
+          <article><b>CIERRE</b><p>Suma precio, transferencia y financiación para mostrar el costo estimado de completar la operación.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="sources-section" id="fuentes">
+      <div class="shell sources-grid">
+        <div><span class="source-kicker">DATOS</span><h2>Información para construir<br>una referencia útil.</h2></div>
+        <div class="source-list">
+          <div><span>Mercado</span><b>Datos oficiales + relevamientos y encuestas</b><small id="source-market-date">Actualizado</small></div>
+          <div><span>Oficial</span><b>Datos y parámetros oficiales vigentes</b><small id="source-dnrpa-date">Vigente</small></div>
+          <div><span>Financiación</span><b>Tasas y condiciones publicadas</b><small id="source-rates-date">Actualizable</small></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer shell">
+    <div class="wordmark compact"><strong>FACIL <span>AUTO</span></strong></div>
+    <p>Herramienta orientativa para operaciones automotores en Argentina. · v1.5.27</p>
+    <a href="privacidad.html">Privacidad</a>
+  </footer>
+
+  <script src="assets/js/auth-gate-v1.5.2.js?v=1.5.12"></script>
+  <script src="assets/js/privacy-mask-v1.5.4.js?v=1.5.6"></script>
+  <script src="assets/js/seo-context-v1.5.6.js?v=1.5.18"></script>
+  <script src="assets/js/form-draft-v1.5.20.js?v=1.5.20"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/finance-primary-v1.5.26.js?v=1.5.26"></script>
+  <script src="assets/js/hero-market-animate-v1.5.27.js?v=1.5.27"></script>
+  <script src="assets/js/insurance-model-v1.5.21.js?v=1.5.21"></script>
+  <script src="assets/js/frontend-v1.4.0.js?v=1.5.6"></script>
+  <script src="assets/js/index-magic.js?v=1.5.18"></script>
+  <script type="module" src="servicios-auth.js?v=1.5.27"></script>
+</body>
+</html>

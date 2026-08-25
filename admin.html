@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="es-AR" class="fa-admin-pending">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#111111">
+  <title>Control | FACIL AUTO</title>
+  <style>.fa-admin-pending body{visibility:hidden}</style>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/admin.css?v=1.5.12">
+</head>
+<body class="admin-page">
+  <header class="topbar">
+    <a class="wordmark" href="index.html" aria-label="FACIL AUTO inicio">
+      <strong>FACIL <span>AUTO</span></strong><small>OPERACIÓN AUTOMOTOR</small>
+    </a>
+    <nav class="topnav">
+      <a href="index.html">Calculadora</a>
+      <a href="mi-cuenta/">Mi cuenta</a>
+    </nav>
+    <a class="top-cta" href="mi-cuenta/">Mi cuenta</a>
+  </header>
+
+  <main class="admin-main admin-shell">
+    <section class="admin-head">
+      <div>
+        <span class="admin-kicker">CONTROL INTERNO</span>
+        <h1>Usuarios<br>y consultas.</h1>
+      </div>
+      <p>Listado de cuentas registradas con su saldo disponible, uso mensual y cantidad histórica de consultas compradas.</p>
+    </section>
+
+    <section class="admin-summary" aria-label="Resumen">
+      <article class="admin-stat">
+        <small>USUARIOS REGISTRADOS</small>
+        <strong id="admin-total-users">—</strong>
+      </article>
+      <article class="admin-stat">
+        <small>CONSULTAS DISPONIBLES</small>
+        <strong id="admin-total-available">—</strong>
+      </article>
+      <article class="admin-stat">
+        <small>CONSULTAS COMPRADAS · HISTÓRICO</small>
+        <strong id="admin-total-purchased">—</strong>
+      </article>
+    </section>
+
+    <section class="admin-users">
+      <div class="admin-section-head">
+        <div>
+          <span class="admin-kicker">CUENTAS</span>
+          <h2>Usuarios registrados</h2>
+        </div>
+        <p>“Compradas históricas” contabiliza créditos registrados como compras. El cupo Free mensual no suma en ese total.</p>
+      </div>
+
+      <div class="admin-table">
+        <div class="admin-row admin-table-head">
+          <span>Usuario</span>
+          <span>Plan</span>
+          <span>Disponibles</span>
+          <span>Compradas</span>
+          <span>Uso / actividad</span>
+        </div>
+        <div id="admin-users-list">
+          <div class="admin-empty">Cargando usuarios…</div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="admin-users admin-commerce">
+      <div class="admin-section-head">
+        <div>
+          <span class="admin-kicker">DISPONIBILIDAD</span>
+          <h2>Planes y referidos</h2>
+        </div>
+        <p>Los cambios se aplican en Mi Cuenta y en las páginas de planes. Free permanece siempre disponible.</p>
+      </div>
+
+      <div class="admin-settings-grid">
+        <article class="admin-setting-card admin-setting-locked">
+          <div>
+            <small>PLAN</small>
+            <h3>FREE</h3>
+            <p>10 consultas mensuales.</p>
+          </div>
+          <span class="admin-setting-fixed">ACTIVO</span>
+        </article>
+
+        <article class="admin-setting-card">
+          <div>
+            <small>PLAN</small>
+            <h3>STANDARD</h3>
+            <p>100 consultas.</p>
+          </div>
+          <label class="admin-switch">
+            <input type="checkbox" id="setting-standard">
+            <span></span>
+            <b>Disponible</b>
+          </label>
+        </article>
+
+        <article class="admin-setting-card">
+          <div>
+            <small>PLAN</small>
+            <h3>PRO</h3>
+            <p>500 consultas.</p>
+          </div>
+          <label class="admin-switch">
+            <input type="checkbox" id="setting-pro">
+            <span></span>
+            <b>Disponible</b>
+          </label>
+        </article>
+
+        <article class="admin-setting-card admin-setting-referral">
+          <div>
+            <small>PROGRAMA</small>
+            <h3>REFERIDOS</h3>
+            <p>Premia al usuario que invita cuando una cuenta nueva se registra desde su enlace.</p>
+          </div>
+          <label class="admin-switch">
+            <input type="checkbox" id="setting-referrals">
+            <span></span>
+            <b>Activo</b>
+          </label>
+          <label class="admin-reward">
+            <span>Consultas por referido</span>
+            <input type="number" id="setting-referral-reward" min="1" max="10000" value="20">
+          </label>
+        </article>
+      </div>
+
+      <div class="admin-settings-actions">
+        <button type="button" id="save-product-settings">GUARDAR CONFIGURACIÓN</button>
+        <p id="product-settings-message">Cargando configuración…</p>
+      </div>
+
+      <div class="admin-referral-summary">
+        <span><strong id="admin-referrals-total">—</strong> referidos acreditados</span>
+        <span><strong id="admin-referrals-credits">—</strong> consultas regaladas</span>
+      </div>
+    </section>
+
+    <section class="admin-users">
+      <div class="admin-section-head">
+        <div>
+          <span class="admin-kicker">BASE DE DATOS</span>
+          <h2>Migración a Cloudflare D1</h2>
+        </div>
+        <p>Herramienta privada para copiar y validar los datasets actuales antes de retirar los JSON públicos.</p>
+      </div>
+      <a class="fa-admin-account-link" href="admin/migracion-d1/">MIGRAR BASE A D1</a>
+    </section>
+  </main>
+
+  <footer class="admin-footer admin-shell">
+    <a class="wordmark compact" href="index.html"><strong>FACIL <span>AUTO</span></strong></a>
+    <p>Control interno de usuarios. · v1.5.12</p>
+    <a href="mi-cuenta/">Mi cuenta</a>
+  </footer>
+
+  <script type="module" src="assets/js/admin.js?v=1.5.12"></script>
+</body>
+</html>
