@@ -1,11 +1,11 @@
 /**
- * FACIL AUTO — Fail-closed consultation gate v1.5.12
+ * FACIL AUTO — Fail-closed consultation gate v1.5.29
  * Se carga ANTES de app.js.
  */
 (() => {
   const TOKEN_KEY = 'facilauto_session_v1';
   const REFERRAL_KEY = 'facilauto_referral_v1';
-  const API_BASE = 'https://facilauto-auth.emanuelastudillo.workers.dev';
+  const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 
   const gate = window.FACIL_AUTO_GATE = window.FACIL_AUTO_GATE || {
     handler: null,

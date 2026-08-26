@@ -1,5 +1,5 @@
 /**
- * FACIL AUTO — Fail-closed consultation gate v1.5.1
+ * FACIL AUTO — Fail-closed consultation gate v1.5.29
  *
  * Se carga ANTES de app.js.
  * Si la capa de autenticación no está lista, la calculadora queda bloqueada.
@@ -7,7 +7,7 @@
 
 (() => {
   const TOKEN_KEY = 'facilauto_session_v1';
-  const API_BASE = 'https://facilauto-auth.emanuelastudillo.workers.dev';
+  const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 
   const gate = window.FACIL_AUTO_GATE = window.FACIL_AUTO_GATE || {
     handler: null,
