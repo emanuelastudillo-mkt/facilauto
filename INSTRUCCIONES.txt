@@ -1,54 +1,40 @@
-FACIL AUTO — PULSO ANIMADO v1.5.27
+FACIL AUTO — MIGRACIÓN DE DOMINIO v1.5.28
 
 PAQUETE INCREMENTAL
 
-ARCHIVOS
-- index.html
-- servicios-auth.js
-- assets/css/hero-market.css
-- assets/js/hero-market-animate-v1.5.27.js
-- INSTRUCCIONES.txt
+DESTINO
+Repositorio: emanuelastudillo-mkt/facilauto
+Dominio principal: https://facilauto.com.ar/
+
+INSTALACIÓN EN GITHUB
+Subir el contenido de este ZIP a la RAÍZ del repositorio, conservando las carpetas.
+Los archivos incluidos reemplazan únicamente los archivos modificados y agregan CNAME + robots.txt.
 
 CAMBIOS
+- Canonical de la home y páginas SEO migrados a https://facilauto.com.ar/
+- JSON-LD de la home actualizado al nuevo dominio.
+- Fallback del ingreso con Google actualizado al nuevo dominio.
+- sitemap.xml migrado al nuevo dominio y con la home agregada.
+- robots.txt agregado con referencia al nuevo sitemap.
+- CNAME agregado con facilauto.com.ar.
+- servicios-auth.js adaptado para reconocer /admin y /admin.html en el dominio raíz.
+- Versión frontend: v1.5.28.
 
-1. ANIMACIÓN DE CIFRAS
-Los 3 números del "Pulso del mercado" ahora:
-- empiezan en 0;
-- incrementan hasta su valor real al entrar en pantalla;
-- se activan una sola vez;
-- respetan prefers-reduced-motion.
+CLOUDFLARE WORKER
+No requiere reemplazar el código del Worker.
+Cuando HTTPS esté habilitado en GitHub Pages, cambiar la variable:
+APP_URL = https://facilauto.com.ar/
 
-2. VECTORES / FLECHAS
-Se agregan SVG de tendencia:
-- flecha de subida en turquesa #01A5BC;
-- flecha de bajada en naranja #e94f32;
-- microindicadores editoriales dentro de cada estadística;
-- dupla de vectores en el encabezado del bloque.
+D1 / SQL
+No requiere cambios.
+No ejecutar migraciones ni consultas SQL por este cambio de dominio.
 
-3. AJUSTE VISUAL
-- mejor jerarquía del título del bloque;
-- chips de lectura ("Movimiento mensual", "Acumulado 2026", "Lectura de ranking");
-- pequeñas animaciones visuales al disparar el conteo.
+GOOGLE AUTH
+Mantener el callback del Worker:
+https://facilauto-auth.emanuelastudillo.workers.dev/auth/google/callback
 
-NO SE MODIFICA
-- calculadora
-- app.js
-- seguros
-- créditos
-- pagos
-- Worker
-- D1
-- SQL
+Agregar como origen autorizado:
+https://facilauto.com.ar
 
-INSTALACIÓN
-
-Subir TODO dentro de:
-/facilauto/
-
-respetando carpetas.
-
-Después:
-Ctrl + F5
-
-VERSIÓN
-v1.5.27
+IMPORTANTE
+No volver a usar https://emanuelmkt.com.ar/facilauto/ como URL principal o canonical.
