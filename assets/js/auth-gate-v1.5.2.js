@@ -1,13 +1,16 @@
 /**
- * FACIL AUTO — Auth + Anonymous consultation gate v1.5.30
+ * FACIL AUTO — Consultation gate v1.5.32
  *
- * Mantiene el flujo autenticado existente y agrega:
- * - 2 consultas sin registro por identificador anónimo.
- * - validación real en Worker/D1 antes de permitir cada consulta.
- * - el tercer intento deriva al login con Google.
+ * Corrección:
+ * - una consulta se debita SOLO si app.js produjo un resultado visible;
+ * - evita consumir créditos cuando la combinación no puede calcularse;
+ * - corrige el flujo dentro de las páginas SEO embebidas;
+ * - mantiene 2 consultas anónimas + límite por IP;
+ * - mantiene Google login, referidos y cuentas registradas.
  *
- * Este archivo conserva el mismo path usado por index.html:
- * assets/js/auth-gate-v1.5.2.js
+ * IMPORTANTE:
+ * servicios-auth.js conserva el manejo de cuenta/planes/login, pero este
+ * archivo pasa a controlar el ciclo "validar -> calcular -> debitar".
  */
 (() => {
   const TOKEN_KEY = 'facilauto_session_v1';
@@ -18,16 +21,24 @@
   const ANON_API_BASE = 'https://facilauto-anon.emanuelmkt.workers.dev';
 
   const DEFAULT_ANON_LIMIT = 2;
+  const DEFAULT_IP_LIMIT = 5;
 
   let anonRemaining = null;
   let anonIpRemaining = null;
-  let anonBusy = false;
+  let busy = false;
 
-  const gate = window.FACIL_AUTO_GATE = window.FACIL_AUTO_GATE || {
-    handler: null,
-    allowOnce: false,
-    authReady: false
-  };
+  const gate = window.FACIL_AUTO_GATE = window.FACIL_AUTO_GATE || {};
+  gate.handler = gate.handler || null;
+  gate.allowOnce = false;
+  gate.authReady = gate.authReady || false;
+
+  function sessionToken() {
+    return String(localStorage.getItem(TOKEN_KEY) || '').trim();
+  }
+
+  function clearSessionToken() {
+    localStorage.removeItem(TOKEN_KEY);
+  }
 
   function returnTo() {
     const params = new URLSearchParams(location.search);
@@ -68,7 +79,7 @@
     }
   }
 
-  function show(message, duration = 4200) {
+  function show(message, duration = 4500) {
     document.querySelector('.fa-gate-message')?.remove();
 
     const el = document.createElement('div');
@@ -98,6 +109,26 @@
     );
   }
 
+  function setButtonDisabled(value) {
+    const button = submitButton();
+    if (button) button.disabled = Boolean(value);
+  }
+
+  function renderRegisteredButton(account) {
+    if (!sessionToken()) return;
+
+    const button = submitButton();
+    if (!button || !account) return;
+
+    const available = Math.max(0, Number(account.available) || 0);
+    button.dataset.empty = available <= 0 ? '1' : '0';
+    button.innerHTML = `CALCULAR OPERACIÓN <span>(${available}) →</span>`;
+    button.setAttribute(
+      'aria-label',
+      `Calcular operación. ${available} consultas disponibles`
+    );
+  }
+
   function storedAnonToken() {
     return String(localStorage.getItem(ANON_TOKEN_KEY) || '').trim();
   }
@@ -107,36 +138,53 @@
     if (clean) localStorage.setItem(ANON_TOKEN_KEY, clean);
   }
 
-  async function anonymousApi(path) {
-    const headers = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    };
+  function renderAnonymousButton() {
+    if (sessionToken()) return;
 
-    const anonymousToken = storedAnonToken();
-    if (anonymousToken) {
-      headers['X-FA-Anonymous-Token'] = anonymousToken;
+    const button = submitButton();
+    if (!button) return;
+
+    const remaining = Number.isFinite(Number(anonRemaining))
+      ? Math.max(0, Number(anonRemaining))
+      : DEFAULT_ANON_LIMIT;
+
+    const ipRemaining = Number.isFinite(Number(anonIpRemaining))
+      ? Math.max(0, Number(anonIpRemaining))
+      : DEFAULT_IP_LIMIT;
+
+    if (remaining <= 0 || ipRemaining <= 0) {
+      button.innerHTML = 'CALCULAR OPERACIÓN <span>INGRESAR →</span>';
+      button.setAttribute(
+        'aria-label',
+        'Ingresar para seguir haciendo consultas'
+      );
+      return;
     }
 
+    button.innerHTML =
+      `CALCULAR OPERACIÓN <span>${remaining} GRATIS →</span>`;
+
+    button.setAttribute(
+      'aria-label',
+      `Calcular operación. ${remaining} consultas sin registro disponibles`
+    );
+  }
+
+  async function requestJson(url, options = {}) {
     let response;
+
     try {
-      response = await fetch(`${ANON_API_BASE}${path}`, {
-        method: 'POST',
-        headers,
-        body: '{}',
-        cache: 'no-store'
+      response = await fetch(url, {
+        cache: 'no-store',
+        ...options
       });
     } catch (cause) {
-      const error = new Error('anonymous_service_unavailable');
+      const error = new Error('network_error');
       error.cause = cause;
       throw error;
     }
 
     const data = await response.json().catch(() => ({}));
-
-    if (data?.token) {
-      setAnonToken(data.token);
-    }
 
     if (!response.ok) {
       const error = new Error(
@@ -150,91 +198,345 @@
     return data;
   }
 
-  function renderAnonymousButton() {
-    if (localStorage.getItem(TOKEN_KEY)) return;
-
-    const button = submitButton();
-    if (!button) return;
-
-    const remaining = Number.isFinite(Number(anonRemaining))
-      ? Math.max(0, Number(anonRemaining))
-      : DEFAULT_ANON_LIMIT;
-
-    let html;
-    let label;
-
-    if (remaining <= 0 || anonIpRemaining === 0) {
-      html = 'CALCULAR OPERACIÓN <span>INGRESAR →</span>';
-      label = 'Ingresar para seguir haciendo consultas';
-    } else {
-      html = `CALCULAR OPERACIÓN <span>${remaining} GRATIS →</span>`;
-      label = `Calcular operación. ${remaining} consultas sin registro disponibles`;
+  async function authApi(path, options = {}) {
+    const token = sessionToken();
+    if (!token) {
+      const error = new Error('not_authenticated');
+      error.status = 401;
+      throw error;
     }
 
-    if (button.innerHTML !== html) {
-      button.innerHTML = html;
-    }
+    const headers = {
+      'Accept': 'application/json',
+      ...(options.body ? {'Content-Type': 'application/json'} : {}),
+      ...(options.headers || {}),
+      'Authorization': `Bearer ${token}`
+    };
 
-    button.setAttribute('aria-label', label);
+    return requestJson(
+      `${AUTH_API_BASE}${path}`,
+      {
+        ...options,
+        headers
+      }
+    );
+  }
+
+  async function anonymousApi(path) {
+    const headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    };
+
+    const token = storedAnonToken();
+    if (token) headers['X-FA-Anonymous-Token'] = token;
+
+    try {
+      const data = await requestJson(
+        `${ANON_API_BASE}${path}`,
+        {
+          method: 'POST',
+          headers,
+          body: '{}'
+        }
+      );
+
+      if (data?.token) setAnonToken(data.token);
+      return data;
+    } catch (err) {
+      if (err.data?.token) setAnonToken(err.data.token);
+      throw err;
+    }
   }
 
   async function refreshAnonymousStatus() {
-    if (localStorage.getItem(TOKEN_KEY)) return;
+    if (sessionToken()) return null;
 
     try {
       const data = await anonymousApi('/api/anonymous/status');
+
       anonRemaining = Math.max(
         0,
         Number(data.remaining ?? DEFAULT_ANON_LIMIT)
       );
+
       anonIpRemaining = Math.max(
         0,
-        Number(data.ip_remaining ?? 5)
+        Number(data.ip_remaining ?? DEFAULT_IP_LIMIT)
       );
+
+      renderAnonymousButton();
+      return data;
     } catch (err) {
       console.warn('FACIL AUTO anonymous status:', err);
       anonRemaining = null;
       anonIpRemaining = null;
+      renderAnonymousButton();
+      return null;
     }
-
-    renderAnonymousButton();
   }
 
-  function continueCalculation(form) {
+  /**
+   * Ejecuta app.js SIN debitar antes.
+   *
+   * app.js calcula de forma sincrónica y solamente pone #resultados.hidden=false
+   * cuando pudo construir la valuación. Ese estado es nuestra confirmación de éxito.
+   */
+  function calculateWithoutCharging(form) {
+    const result = document.getElementById('resultados');
+    const hadVisibleResult = Boolean(result && !result.hidden);
+
+    // Evita que un resultado anterior sea confundido con uno nuevo.
+    if (result) result.hidden = true;
+
+    // requestSubmit vuelve a ejecutar el evento submit. allowOnce deja pasar
+    // exactamente ese submit hacia app.js.
     gate.allowOnce = true;
 
-    if (typeof form.requestSubmit === 'function') {
-      form.requestSubmit();
-    } else {
-      form.dispatchEvent(new Event('submit', {
-        bubbles: true,
-        cancelable: true
-      }));
+    try {
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.dispatchEvent(new Event('submit', {
+          bubbles: true,
+          cancelable: true
+        }));
+      }
+    } catch (err) {
+      gate.allowOnce = false;
+      if (result && hadVisibleResult) result.hidden = false;
+      console.error('FACIL AUTO calculation:', err);
+      return false;
+    }
+
+    // Si la validación nativa frenó requestSubmit, el segundo submit no ocurrió.
+    // No dejamos allowOnce armado para un intento posterior.
+    gate.allowOnce = false;
+
+    const success = Boolean(result && !result.hidden);
+
+    if (!success && result && hadVisibleResult) {
+      result.hidden = false;
+    }
+
+    return success;
+  }
+
+  function hideCurrentResult() {
+    const result = document.getElementById('resultados');
+    if (result) result.hidden = true;
+  }
+
+  function goToPlans() {
+    const destination = new URL('planes/', location.origin + '/').toString();
+
+    setTimeout(() => {
+      if (window.top !== window.self) {
+        window.top.location.href = destination;
+      } else {
+        window.location.href = destination;
+      }
+    }, 850);
+  }
+
+  async function registeredFlow(form) {
+    let me;
+
+    try {
+      me = await authApi('/api/me');
+    } catch (err) {
+      if (err.status === 401) {
+        clearSessionToken();
+        show('Tu sesión venció. Volvé a ingresar.');
+        setTimeout(login, 500);
+        return;
+      }
+
+      show('No se pudo comprobar tus consultas disponibles.');
+      return;
+    }
+
+    const account = me?.account || null;
+    const isAdmin = Boolean(me?.is_admin);
+    const available = Math.max(0, Number(account?.available) || 0);
+
+    renderRegisteredButton(account);
+
+    if (available <= 0 && !isAdmin) {
+      show(
+        'No te quedan consultas disponibles. Podés ampliar tu plan desde Planes.'
+      );
+      goToPlans();
+      return;
+    }
+
+    // Primero se calcula. Si app.js no produce resultado, NO se debita.
+    const calculated = calculateWithoutCharging(form);
+
+    if (!calculated) {
+      show(
+        'No se pudo generar un resultado para esta combinación. No se consumió ninguna consulta.'
+      );
+      return;
+    }
+
+    try {
+      const charged = await authApi(
+        '/api/consultations/use',
+        { method: 'POST' }
+      );
+
+      renderRegisteredButton(charged?.account || account);
+      return;
+    } catch (err) {
+      // El administrador con saldo 0 utiliza el comportamiento existente:
+      // el primer 402 regenera bonus. Luego debitamos automáticamente una vez.
+      if (
+        isAdmin &&
+        (err.status === 402 || err.message === 'no_consultations_left')
+      ) {
+        try {
+          const refreshed = await authApi('/api/me');
+          const refreshedAccount = refreshed?.account || null;
+          const refreshedAvailable = Math.max(
+            0,
+            Number(refreshedAccount?.available) || 0
+          );
+
+          if (refreshedAvailable > 0) {
+            const retry = await authApi(
+              '/api/consultations/use',
+              { method: 'POST' }
+            );
+
+            renderRegisteredButton(
+              retry?.account || refreshedAccount
+            );
+            return;
+          }
+        } catch (retryErr) {
+          console.error(
+            'FACIL AUTO admin consultation retry:',
+            retryErr
+          );
+        }
+      }
+
+      if (err.status === 401) {
+        hideCurrentResult();
+        clearSessionToken();
+        show('Tu sesión venció. Volvé a ingresar.');
+        setTimeout(login, 500);
+        return;
+      }
+
+      if (
+        err.status === 402 ||
+        err.message === 'no_consultations_left'
+      ) {
+        hideCurrentResult();
+        show('No te quedan consultas disponibles.');
+        goToPlans();
+        return;
+      }
+
+      // Si hubo un error de red después de calcular, comprobamos el saldo:
+      // si el Worker alcanzó a debitar, mantenemos el resultado.
+      try {
+        const after = await authApi('/api/me');
+        const afterAccount = after?.account || null;
+        const afterAvailable = Math.max(
+          0,
+          Number(afterAccount?.available) || 0
+        );
+
+        renderRegisteredButton(afterAccount);
+
+        if (afterAvailable < available) {
+          return;
+        }
+      } catch (_) {}
+
+      hideCurrentResult();
+      show(
+        'No se pudo registrar la consulta. El resultado fue descartado para evitar un débito incorrecto.'
+      );
     }
   }
 
-  async function useAnonymousConsultation(form) {
-    if (anonBusy) return;
-
-    anonBusy = true;
-    const button = submitButton();
-    if (button) button.disabled = true;
+  async function anonymousFlow(form) {
+    let status;
 
     try {
-      const data = await anonymousApi('/api/anonymous/use');
+      status = await anonymousApi('/api/anonymous/status');
 
-      anonRemaining = Math.max(0, Number(data.remaining ?? 0));
-      anonIpRemaining = Math.max(0, Number(data.ip_remaining ?? 0));
+      anonRemaining = Math.max(
+        0,
+        Number(status.remaining ?? DEFAULT_ANON_LIMIT)
+      );
+
+      anonIpRemaining = Math.max(
+        0,
+        Number(status.ip_remaining ?? DEFAULT_IP_LIMIT)
+      );
+
       renderAnonymousButton();
-
-      continueCalculation(form);
     } catch (err) {
-      const loginRequired =
+      console.error('FACIL AUTO anonymous status:', err);
+      show(
+        'No se pudo validar la consulta gratuita. Intentá nuevamente en unos segundos.'
+      );
+      return;
+    }
+
+    if (
+      anonRemaining <= 0 ||
+      anonIpRemaining <= 0 ||
+      status?.login_required === true
+    ) {
+      show(
+        'Terminaste las consultas sin registro. Ingresá con Google para continuar.'
+      );
+      setTimeout(login, 700);
+      return;
+    }
+
+    const beforeRemaining = anonRemaining;
+
+    // Igual que en usuarios registrados: se consume SOLO si hubo resultado.
+    const calculated = calculateWithoutCharging(form);
+
+    if (!calculated) {
+      show(
+        'No se pudo generar un resultado para esta combinación. No se consumió ninguna consulta gratis.'
+      );
+      return;
+    }
+
+    try {
+      const used = await anonymousApi('/api/anonymous/use');
+
+      anonRemaining = Math.max(
+        0,
+        Number(used.remaining ?? 0)
+      );
+
+      anonIpRemaining = Math.max(
+        0,
+        Number(used.ip_remaining ?? 0)
+      );
+
+      renderAnonymousButton();
+      return;
+    } catch (err) {
+      const limitReached =
         err.status === 402 ||
         err.status === 429 ||
         err.data?.login_required === true;
 
-      if (loginRequired) {
+      if (limitReached) {
+        hideCurrentResult();
+
         if (err.status === 402) anonRemaining = 0;
         if (err.status === 429) anonIpRemaining = 0;
 
@@ -244,21 +546,55 @@
           'Terminaste las consultas sin registro. Ingresá con Google para continuar.'
         );
 
-        setTimeout(() => {
-          if (typeof gate.login === 'function') gate.login();
-          else login();
-        }, 700);
-
+        setTimeout(login, 700);
         return;
       }
 
-      console.error('FACIL AUTO anonymous consultation:', err);
+      // Una respuesta puede perderse después de que el Worker consumió.
+      // Verificamos el estado antes de descartar el resultado.
+      try {
+        const after = await anonymousApi('/api/anonymous/status');
+
+        anonRemaining = Math.max(
+          0,
+          Number(after.remaining ?? DEFAULT_ANON_LIMIT)
+        );
+
+        anonIpRemaining = Math.max(
+          0,
+          Number(after.ip_remaining ?? DEFAULT_IP_LIMIT)
+        );
+
+        renderAnonymousButton();
+
+        if (anonRemaining < beforeRemaining) {
+          return;
+        }
+      } catch (_) {}
+
+      hideCurrentResult();
+
       show(
-        'No se pudo validar la consulta gratuita. Intentá nuevamente en unos segundos.'
+        'No se pudo registrar la consulta gratuita. El resultado fue descartado y podés volver a intentar.'
       );
+    }
+  }
+
+  async function handleSubmit(form) {
+    if (busy) return;
+
+    busy = true;
+    setButtonDisabled(true);
+
+    try {
+      if (sessionToken()) {
+        await registeredFlow(form);
+      } else {
+        await anonymousFlow(form);
+      }
     } finally {
-      anonBusy = false;
-      if (button) button.disabled = false;
+      busy = false;
+      setButtonDisabled(false);
     }
   }
 
@@ -274,23 +610,12 @@
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      // Con sesión: se conserva exactamente el gate de créditos actual.
-      if (localStorage.getItem(TOKEN_KEY)) {
-        if (typeof gate.handler === 'function') {
-          gate.handler(form);
-          return;
-        }
-
-        show('Preparando tu cuenta. Intentá nuevamente en un instante.');
-        return;
-      }
-
-      // Sin sesión: el Worker anónimo decide si queda una consulta.
-      useAnonymousConsultation(form);
+      handleSubmit(form);
     }, true);
   }
 
   const cta = document.querySelector('[data-auth-entry]');
+
   if (cta) {
     cta.addEventListener('click', event => {
       event.preventDefault();
@@ -298,12 +623,13 @@
     });
   }
 
-  // Mantiene el CTA correcto aunque servicios-auth.js vuelva a renderizar
-  // temporalmente "INGRESAR" mientras inicializa la cuenta.
+  // servicios-auth.js puede actualizar el texto del botón durante su init.
+  // En modo anónimo lo corregimos automáticamente con el saldo anónimo.
   const button = submitButton();
+
   if (button) {
     const observer = new MutationObserver(() => {
-      if (!localStorage.getItem(TOKEN_KEY)) {
+      if (!sessionToken()) {
         queueMicrotask(renderAnonymousButton);
       }
     });
@@ -315,18 +641,20 @@
     });
   }
 
-  // Versión visible sin obligar a modificar index.html en este incremental.
   document.querySelectorAll('footer p').forEach(el => {
     if (/v\d+\.\d+\.\d+/.test(el.textContent || '')) {
       el.textContent = el.textContent.replace(
         /v\d+\.\d+\.\d+/g,
-        'v1.5.30'
+        'v1.5.32'
       );
     }
   });
 
   window.addEventListener('storage', event => {
-    if (event.key === TOKEN_KEY || event.key === ANON_TOKEN_KEY) {
+    if (
+      event.key === TOKEN_KEY ||
+      event.key === ANON_TOKEN_KEY
+    ) {
       refreshAnonymousStatus();
       renderAnonymousButton();
     }
@@ -334,6 +662,8 @@
 
   gate.login = login;
 
-  renderAnonymousButton();
-  refreshAnonymousStatus();
+  if (!sessionToken()) {
+    renderAnonymousButton();
+    refreshAnonymousStatus();
+  }
 })();
