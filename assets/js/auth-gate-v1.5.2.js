@@ -1,5 +1,5 @@
 /**
- * FACIL AUTO — Consultation gate v1.5.33
+ * FACIL AUTO — Consultation gate v1.5.34
  *
  * Corrección:
  * - una consulta se debita SOLO si app.js produjo un resultado visible;
@@ -31,7 +31,7 @@
   gate.handler = gate.handler || null;
   gate.allowOnce = false;
   gate.authReady = gate.authReady || false;
-  gate.version = '1.5.33';
+  gate.version = '1.5.34';
   gate.ownsConsultationFlow = true;
 
   function sessionToken() {
@@ -287,12 +287,19 @@
   function calculateWithoutCharging(form) {
     const result = document.getElementById('resultados');
     const hadVisibleResult = Boolean(result && !result.hidden);
+    const attemptId =
+      `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    // Evita que un resultado anterior sea confundido con uno nuevo.
+    // app.js completa este estado dentro del mismo evento submit.
+    window.FACIL_AUTO_CALC_STATE = {
+      id: attemptId,
+      completed: false,
+      success: false,
+      reason: ''
+    };
+
     if (result) result.hidden = true;
 
-    // requestSubmit vuelve a ejecutar el evento submit. allowOnce deja pasar
-    // exactamente ese submit hacia app.js.
     gate.allowOnce = true;
 
     try {
@@ -311,11 +318,15 @@
       return false;
     }
 
-    // Si la validación nativa frenó requestSubmit, el segundo submit no ocurrió.
-    // No dejamos allowOnce armado para un intento posterior.
     gate.allowOnce = false;
 
-    const success = Boolean(result && !result.hidden);
+    const state = window.FACIL_AUTO_CALC_STATE;
+    const success = Boolean(
+      state &&
+      state.id === attemptId &&
+      state.completed === true &&
+      state.success === true
+    );
 
     if (!success && result && hadVisibleResult) {
       result.hidden = false;
@@ -647,7 +658,7 @@
     if (/v\d+\.\d+\.\d+/.test(el.textContent || '')) {
       el.textContent = el.textContent.replace(
         /v\d+\.\d+\.\d+/g,
-        'v1.5.33'
+        'v1.5.34'
       );
     }
   });

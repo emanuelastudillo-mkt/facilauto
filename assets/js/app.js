@@ -1,7 +1,7 @@
 const $=s=>document.querySelector(s);
 const nowYear=new Date().getFullYear();
 let marketData,dnrpaData,ratesData,config,catalogData;
-let catalogByBrand=new Map(),catalogById=new Map(),marketById=new Map(),dnrpaById=new Map(),marketByBrandModel=new Map(),dnrpaByBrand=new Map(),dnrpaByBrandYear=new Map();
+let catalogByBrand=new Map(),catalogById=new Map(),marketById=new Map(),dnrpaById=new Map(),marketByBrandModel=new Map(),marketByBrand=new Map(),dnrpaByBrand=new Map(),dnrpaByBrandYear=new Map();
 let ratioByBrandYear=new Map(),ratioByYear=new Map(),allRatios=[];
 const fmtARS=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n):'—';
 const fmtUSD=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(n).replace('$','US$ '):'—';
@@ -15,6 +15,14 @@ function median(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);
 function weightedAverage(items){let n=0,d=0;for(const i of items){if(Number.isFinite(i.value)&&Number.isFinite(i.weight)&&i.weight>0){n+=i.value*i.weight;d+=i.weight;}}return d?n/d:NaN;}
 function similarity(a,b){const A=new Set(tokens(a)),B=new Set(tokens(b));if(!A.size||!B.size)return 0;const inter=[...A].filter(x=>B.has(x)).length;return inter/Math.sqrt(A.size*B.size);}
 function marketKey(brand,model){return `${brand}|${model}`;}
+function finishCalculationAttempt(success,reason=''){
+  const state=window.FACIL_AUTO_CALC_STATE;
+  if(!state||!state.id)return;
+  state.completed=true;
+  state.success=Boolean(success);
+  state.reason=String(reason||'');
+  state.completedAt=Date.now();
+}
 
 const DATA_SOURCES=[
   ['data/vehicle_market.json','valores de mercado'],
@@ -70,6 +78,8 @@ async function loadData(){
     const key=marketKey(row.brand,row.model);
     if(!marketByBrandModel.has(key))marketByBrandModel.set(key,[]);
     marketByBrandModel.get(key).push(row);
+    if(!marketByBrand.has(row.brand))marketByBrand.set(row.brand,[]);
+    marketByBrand.get(row.brand).push(row);
   }
   for(const row of dnrpaData.rows){
     dnrpaById.set(row.id,row);
@@ -268,22 +278,27 @@ function textScoreEntryDnrpa(entry,row){
 }
 function findDnrpaForEntry(entry,year){
   if(year==='0km')return null;
-  let candidates=(entry.dnrpa_ids||[]).map(id=>dnrpaById.get(id)).filter(Boolean);
-  const attached=candidates.length>0;
-  if(!candidates.length)candidates=dnrpaByBrandYear.get(`${entry.brand}|${year}`)||dnrpaByBrand.get(entry.brand)||[];
+  const attachedRows=(entry.dnrpa_ids||[]).map(id=>dnrpaById.get(id)).filter(Boolean);
   let best=null;
-  for(const row of candidates){
+
+  for(const row of attachedRows){
     const val=estimateDnrpaRow(row,year);if(!val)continue;
-    let score=textScoreEntryDnrpa(entry,row)+(val.kind==='exact'?.18:0)+(attached?.08:0);
-    if(!best||score>best.score)best={row,score,...val,attached};
+    const score=textScoreEntryDnrpa(entry,row)+(val.kind==='exact'?.18:0)+.08;
+    if(!best||score>best.score)best={row,score,...val,attached:true};
   }
-  if(!best&&!attached){
-    for(const row of (dnrpaByBrand.get(entry.brand)||[])){
+
+  // Algunas variantes DNRPA están seleccionables pero su fila asociada no tiene
+  // una valuación utilizable para el año elegido. En ese caso buscamos la
+  // referencia más cercana de la misma marca en lugar de devolver null.
+  if(!best){
+    const fallbackRows=dnrpaByBrandYear.get(`${entry.brand}|${year}`)||dnrpaByBrand.get(entry.brand)||[];
+    for(const row of fallbackRows){
       const val=estimateDnrpaRow(row,year);if(!val)continue;
       const score=textScoreEntryDnrpa(entry,row)+(val.kind==='exact'?.18:0);
       if(!best||score>best.score)best={row,score,...val,attached:false};
     }
   }
+
   return best;
 }
 function dnrpaBasedMarketEstimate(entry,year,dmatch){
@@ -291,8 +306,47 @@ function dnrpaBasedMarketEstimate(entry,year,dmatch){
   const ratio=ratioFor(entry.brand,year);if(!Number.isFinite(ratio.ratio))return null;
   return {amountARS:dmatch.value*ratio.ratio,confidence:'Baja',confidenceClass:'low',method:`Estimación desde valuación DNRPA × relación mercado/registro (${ratio.scope}, ${ratio.count} referencias)`,exactPrice:null,sourceRows:[],basisCount:ratio.count};
 }
+function sameBrandMarketEstimate(entry,year,fx){
+  const rows=marketByBrand.get(entry.brand)||[];
+  if(!rows.length)return null;
+
+  const target=`${entry.model} ${entry.variant}`;
+  const scored=[];
+
+  for(const row of rows){
+    const est=estimateMarketRow(row,year,fx);if(!est)continue;
+    const sim=similarity(target,`${row.model} ${row.variant}`);
+    const kindWeight=est.kind==='exact'?1.20:est.kind==='interpolated'?1.00:.74;
+    scored.push({...est,sim,weight:(.08+sim*2.4)*kindWeight});
+  }
+
+  if(!scored.length)return null;
+
+  scored.sort((a,b)=>(b.sim-a.sim)||(b.weight-a.weight));
+  const similar=scored.filter(x=>x.sim>=.15);
+  const selected=(similar.length?similar:scored).slice(0,similar.length?7:5);
+  const value=weightedAverage(selected.map(x=>({value:x.value,weight:x.weight})));
+
+  if(!Number.isFinite(value))return null;
+
+  const exactCount=selected.filter(x=>x.kind==='exact').length;
+  return {
+    amountARS:value,
+    confidence:'Baja',
+    confidenceClass:'low',
+    method:exactCount
+      ? `Estimación ponderada con ${selected.length} modelos comparables de ${entry.brand} (${exactCount} con año exacto)`
+      : `Estimación ponderada con modelos y años comparables de ${entry.brand}`,
+    exactPrice:null,
+    sourceRows:selected.map(x=>x.row),
+    basisCount:selected.length
+  };
+}
 function marketEstimate(entry,year,fx,dmatch){
-  return bestDirectMarketEstimate(entry,year,fx)||sameModelMarketEstimate(entry,year,fx)||dnrpaBasedMarketEstimate(entry,year,dmatch);
+  return bestDirectMarketEstimate(entry,year,fx)
+    ||sameModelMarketEstimate(entry,year,fx)
+    ||dnrpaBasedMarketEstimate(entry,year,dmatch)
+    ||sameBrandMarketEstimate(entry,year,fx);
 }
 
 function monthlyPayment(principal,months,rate){if(principal<=0)return 0;if(rate<=0)return principal/months;const p=Math.pow(1+rate,months);return principal*rate*p/(p-1);}
@@ -330,11 +384,18 @@ function renderOpportunity(op,hasEnteredPrice){
 }
 
 $('#vehicle-form').addEventListener('submit',e=>{
-  e.preventDefault();const entry=currentEntry(),year=$('#year').value;if(!entry||!year)return;
+  e.preventDefault();
+  const entry=currentEntry(),year=$('#year').value;
+  if(!entry||!year){
+    finishCalculationAttempt(false,'missing_vehicle');
+    return;
+  }
   const km=Number($('#km').value)||0,fx=Number($('#fx-rate').value)||config.exchange_rate_ars_per_usd||1;
   const dmatch=findDnrpaForEntry(entry,year),mestimate=marketEstimate(entry,year,fx,dmatch);
   if(!mestimate||!Number.isFinite(mestimate.amountARS)){
-    $('#data-status').textContent='No fue posible construir una referencia para esta combinación. Revisá la versión o actualizá las fuentes.';return;
+    $('#data-status').textContent='No fue posible construir una referencia para esta combinación. Revisá la versión o actualizá las fuentes.';
+    finishCalculationAttempt(false,'no_reference');
+    return;
   }
   const factor=mileageFactor(year,km),guideARS=mestimate.amountARS,adjustedARS=guideARS*factor,adjustedUSD=adjustedARS/fx;
   const buyARS=adjustedARS*config.market.purchase_factor,saleARS=adjustedARS*config.market.sale_factor;
@@ -358,7 +419,9 @@ $('#vehicle-form').addEventListener('submit',e=>{
 
   $('#loan-amount').textContent=fmtARS(principal);renderBanks(offers,months);$('#finance-source').textContent=`${ratesData.source} · actualización ${ratesData.updated_at}. ${ratesData.calculation_note}`;$('#cash-close').textContent=fmtARS(cashClose);$('#finance-close').textContent=fmtARS(financeClose);$('#finance-close-bank').textContent=bestOffer?`${bestOffer.bank} · ${months} cuotas de ${fmtARS(bestOffer.payment)}`:'Sin financiación seleccionable';$('#operation-used').textContent=hasEnteredPrice?fmtARS(operationPrice):`${fmtARS(operationPrice)} · referencia estimada`;
 
-  $('#resultados').hidden=false;$('#resultados').scrollIntoView({behavior:'smooth',block:'start'});
+  $('#resultados').hidden=false;
+  finishCalculationAttempt(true,'ok');
+  $('#resultados').scrollIntoView({behavior:'smooth',block:'start'});
 });
 
 loadData().catch(showLoadError);
