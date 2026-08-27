@@ -1,5 +1,5 @@
 /**
- * FACIL AUTO — Consultation manager v1.5.35
+ * FACIL AUTO — Consultation manager v1.5.36
  *
  * Flujo robusto:
  * 1) app.js calcula y prepara el resultado en memoria/DOM oculto.
@@ -24,7 +24,7 @@
   let busy = false;
 
   const gate = window.FACIL_AUTO_GATE = window.FACIL_AUTO_GATE || {};
-  gate.version = '1.5.35';
+  gate.version = '1.5.36';
   gate.ownsConsultationFlow = true;
   gate.handler = null;
   gate.allowOnce = false;
@@ -240,52 +240,14 @@
   }
 
   async function consumeRegistered() {
-    let me;
-    try {
-      me = await authApi('/api/me');
-    } catch (err) {
-      if (err.status === 401) {
-        clearSessionToken();
-        show('Tu sesión venció. Volvé a ingresar.');
-        setTimeout(login, 500);
-        return false;
-      }
-      show('No se pudo comprobar tus consultas disponibles.');
-      return false;
-    }
-
-    const account = me?.account || null;
-    const isAdmin = Boolean(me?.is_admin);
-    const available = Math.max(0, Number(account?.available) || 0);
-    renderRegisteredButton(account);
-
-    if (available <= 0 && !isAdmin) {
-      show('No te quedan consultas disponibles. Podés ampliar tu plan desde Planes.');
-      goToPlans();
-      return false;
-    }
-
+    // El Worker es la única fuente de verdad del saldo.
+    // Evitamos el GET /api/me previo: una consulta autenticada necesita
+    // un solo POST y una única respuesta para autorizar el resultado.
     try {
       const used = await authApi('/api/consultations/use', {method:'POST'});
-      renderRegisteredButton(used?.account || account);
+      renderRegisteredButton(used?.account || null);
       return true;
     } catch (err) {
-      if (isAdmin && (err.status === 402 || err.message === 'no_consultations_left')) {
-        try {
-          const refreshed = await authApi('/api/me');
-          const refreshedAccount = refreshed?.account || null;
-          const refreshedAvailable = Math.max(0, Number(refreshedAccount?.available) || 0);
-
-          if (refreshedAvailable > 0) {
-            const retry = await authApi('/api/consultations/use', {method:'POST'});
-            renderRegisteredButton(retry?.account || refreshedAccount);
-            return true;
-          }
-        } catch (retryErr) {
-          console.error('FACIL AUTO admin consultation retry:', retryErr);
-        }
-      }
-
       if (err.status === 401) {
         clearSessionToken();
         show('Tu sesión venció. Volvé a ingresar.');
@@ -294,8 +256,12 @@
       }
 
       if (err.status === 402 || err.message === 'no_consultations_left') {
+        if (err.data?.account) renderRegisteredButton(err.data.account);
         show('No te quedan consultas disponibles.');
-        if (!isAdmin) goToPlans();
+
+        if (err.data?.is_admin !== true) {
+          goToPlans();
+        }
         return false;
       }
 
