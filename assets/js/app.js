@@ -15,14 +15,6 @@ function median(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);
 function weightedAverage(items){let n=0,d=0;for(const i of items){if(Number.isFinite(i.value)&&Number.isFinite(i.weight)&&i.weight>0){n+=i.value*i.weight;d+=i.weight;}}return d?n/d:NaN;}
 function similarity(a,b){const A=new Set(tokens(a)),B=new Set(tokens(b));if(!A.size||!B.size)return 0;const inter=[...A].filter(x=>B.has(x)).length;return inter/Math.sqrt(A.size*B.size);}
 function marketKey(brand,model){return `${brand}|${model}`;}
-function finishCalculationAttempt(success,reason=''){
-  const state=window.FACIL_AUTO_CALC_STATE;
-  if(!state||!state.id)return;
-  state.completed=true;
-  state.success=Boolean(success);
-  state.reason=String(reason||'');
-  state.completedAt=Date.now();
-}
 
 const DATA_SOURCES=[
   ['data/vehicle_market.json','valores de mercado'],
@@ -383,18 +375,18 @@ function renderOpportunity(op,hasEnteredPrice){
   const clamped=Math.max(-20,Math.min(20,op.pct));$('#opportunity-marker').style.left=`${((clamped+20)/40)*100}%`;
 }
 
-$('#vehicle-form').addEventListener('submit',e=>{
+$('#vehicle-form').addEventListener('submit',async e=>{
   e.preventDefault();
+  const resultSection=$('#resultados');
+  if(resultSection)resultSection.hidden=true;
   const entry=currentEntry(),year=$('#year').value;
   if(!entry||!year){
-    finishCalculationAttempt(false,'missing_vehicle');
     return;
   }
   const km=Number($('#km').value)||0,fx=Number($('#fx-rate').value)||config.exchange_rate_ars_per_usd||1;
   const dmatch=findDnrpaForEntry(entry,year),mestimate=marketEstimate(entry,year,fx,dmatch);
   if(!mestimate||!Number.isFinite(mestimate.amountARS)){
     $('#data-status').textContent='No fue posible construir una referencia para esta combinación. Revisá la versión o actualizá las fuentes.';
-    finishCalculationAttempt(false,'no_reference');
     return;
   }
   const factor=mileageFactor(year,km),guideARS=mestimate.amountARS,adjustedARS=guideARS*factor,adjustedUSD=adjustedARS/fx;
@@ -419,8 +411,16 @@ $('#vehicle-form').addEventListener('submit',e=>{
 
   $('#loan-amount').textContent=fmtARS(principal);renderBanks(offers,months);$('#finance-source').textContent=`${ratesData.source} · actualización ${ratesData.updated_at}. ${ratesData.calculation_note}`;$('#cash-close').textContent=fmtARS(cashClose);$('#finance-close').textContent=fmtARS(financeClose);$('#finance-close-bank').textContent=bestOffer?`${bestOffer.bank} · ${months} cuotas de ${fmtARS(bestOffer.payment)}`:'Sin financiación seleccionable';$('#operation-used').textContent=hasEnteredPrice?fmtARS(operationPrice):`${fmtARS(operationPrice)} · referencia estimada`;
 
-  $('#resultados').hidden=false;
-  finishCalculationAttempt(true,'ok');
+  const consultationManager=window.FACIL_AUTO_GATE;
+  if(!consultationManager||typeof consultationManager.consume!=='function'){
+    $('#data-status').textContent='No se pudo validar la consulta. Recargá la página e intentá nuevamente.';
+    return;
+  }
+
+  const consultationAllowed=await consultationManager.consume();
+  if(!consultationAllowed)return;
+
+  if(resultSection)resultSection.hidden=false;
   $('#resultados').scrollIntoView({behavior:'smooth',block:'start'});
 });
 

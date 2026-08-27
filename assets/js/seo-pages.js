@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     embed: '1',
     focus,
     share_url: location.href,
-    v: '1.5.34'
+    v: '1.5.35'
   });
 
   if (frame.dataset.km) params.set('km', frame.dataset.km);

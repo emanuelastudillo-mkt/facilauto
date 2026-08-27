@@ -6,7 +6,7 @@
 const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 const TOKEN_KEY = 'facilauto_session_v1';
 const REFERRAL_KEY = 'facilauto_referral_v1';
-const FRONTEND_VERSION = '1.5.33';
+const FRONTEND_VERSION = '1.5.35';
 const INSTAGRAM_URL = 'https://www.instagram.com/facilauto.ok';
 
 const SITE_ROOT = new URL('./', import.meta.url);
