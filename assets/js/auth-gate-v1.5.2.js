@@ -1,5 +1,5 @@
 /**
- * FACIL AUTO — Consultation gate v1.5.32
+ * FACIL AUTO — Consultation gate v1.5.33
  *
  * Corrección:
  * - una consulta se debita SOLO si app.js produjo un resultado visible;
@@ -31,6 +31,8 @@
   gate.handler = gate.handler || null;
   gate.allowOnce = false;
   gate.authReady = gate.authReady || false;
+  gate.version = '1.5.33';
+  gate.ownsConsultationFlow = true;
 
   function sessionToken() {
     return String(localStorage.getItem(TOKEN_KEY) || '').trim();
@@ -645,7 +647,7 @@
     if (/v\d+\.\d+\.\d+/.test(el.textContent || '')) {
       el.textContent = el.textContent.replace(
         /v\d+\.\d+\.\d+/g,
-        'v1.5.32'
+        'v1.5.33'
       );
     }
   });

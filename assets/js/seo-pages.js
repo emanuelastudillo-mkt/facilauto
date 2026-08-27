@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams({
     embed: '1',
     focus,
-    share_url: location.href
+    share_url: location.href,
+    v: '1.5.33'
   });
 
   if (frame.dataset.km) params.set('km', frame.dataset.km);

@@ -1,12 +1,12 @@
 /**
- * FACIL AUTO — Auth + Consultas + Admin + Planes + Referidos + Marca + Mobile + Draft + Insurance + Admin Refill + NoFlash + CTA v1.5.28
+ * FACIL AUTO — Auth + Consultas + Admin + Planes + Referidos + Marca + Mobile + Draft + Insurance + Admin Refill + NoFlash + CTA v1.5.33
  * Login Google + acceso a /cuenta.html · v1.3.1
  */
 
 const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 const TOKEN_KEY = 'facilauto_session_v1';
 const REFERRAL_KEY = 'facilauto_referral_v1';
-const FRONTEND_VERSION = '1.5.29';
+const FRONTEND_VERSION = '1.5.33';
 const INSTAGRAM_URL = 'https://www.instagram.com/facilauto.ok';
 
 const SITE_ROOT = new URL('./', import.meta.url);
@@ -1274,6 +1274,18 @@ function installConsultationGate() {
     return;
   }
 
+  // Desde v1.5.32 el gate cargado antes de app.js es el dueño del ciclo:
+  // validar -> calcular -> confirmar resultado -> debitar.
+  // No conectamos el handler legado porque debitaba antes del cálculo.
+  if (window.FACIL_AUTO_GATE.ownsConsultationFlow === true) {
+    window.FACIL_AUTO_GATE.handler = null;
+    window.FACIL_AUTO_GATE.authReady = true;
+    consultationGateInstalled = true;
+    updateConsultationButton();
+    return;
+  }
+
+  // Fallback para instalaciones antiguas que todavía no carguen el gate nuevo.
   window.FACIL_AUTO_GATE.handler = consultationGate;
   window.FACIL_AUTO_GATE.authReady = true;
   consultationGateInstalled = true;
