@@ -211,9 +211,13 @@ def main():
         if not e['years'] and related:
             rel_rows = [m_by_id[mid] for mid in sorted(set(related)) if mid in m_by_id]
             e['years'] = years_for(rel_rows, [])
-        # Evitar variantes sin ningún año seleccionable.
-        if not e['years']:
-            e['years'] = [str(y) for y in range(2026, 1980, -1)]
+        # Si no existe ningún año respaldado por mercado o DNRPA, la variante
+        # no debe ser seleccionable. La versión anterior inventaba 1981–2026,
+        # generando combinaciones que después no podían calcularse.
+        pass
+
+    excluded_no_years = sum(1 for e in entries if not e.get('years'))
+    entries = [e for e in entries if e.get('years')]
 
     # Eliminar duplicados DNRPA exactos que quedaron como entradas separadas por parser/body.
     deduped = []
@@ -241,6 +245,7 @@ def main():
             'dnrpa_rows': len(drows),
             'dnrpa_linked_to_market': matched_to_market,
             'dnrpa_added_as_catalog': unmatched_dnrpa,
+            'excluded_without_years': excluded_no_years,
         },
         'entries': deduped,
     }

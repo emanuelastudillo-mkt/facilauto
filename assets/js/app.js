@@ -150,7 +150,54 @@ function setVariantOptions(entries){
   if(extra.length)html+=`<optgroup label="Versiones adicionales DNRPA">${extra.map(e=>`<option value="${e.id}">${escapeHtml(e.variant)}</option>`).join('')}</optgroup>`;
   el.innerHTML=html;el.disabled=false;
 }
-function currentEntry(){return catalogById.get($('#variant').value)||null;}
+function currentEntry(){
+  const entry=catalogById.get($('#variant').value)||null;
+  if(!entry)return null;
+  if(entry.brand!==$('#brand').value)return null;
+  if(entry.model!==$('#model').value)return null;
+  return entry;
+}
+function setCalculationStatus(message,state='error'){
+  const status=$('#data-status');
+  if(!status)return;
+  status.dataset.state=state;
+  status.textContent=message;
+}
+function resetInvalidVehicleSelection(){
+  const brand=$('#brand').value;
+  const model=$('#model').value;
+  const rows=(catalogByBrand.get(brand)||[]).filter(r=>r.model===model);
+  setVariantOptions(rows);
+  setOptions($('#year'),[],'Elegí versión');
+}
+function validatedSelection(){
+  const brand=$('#brand').value;
+  const model=$('#model').value;
+  const variantId=$('#variant').value;
+  const year=$('#year').value;
+
+  if(!brand)return {ok:false,message:'Elegí una marca para continuar.'};
+  if(!model)return {ok:false,message:'Elegí un modelo para continuar.'};
+
+  const entry=catalogById.get(variantId)||null;
+
+  if(!entry||entry.brand!==brand||entry.model!==model){
+    return {
+      ok:false,
+      repair:true,
+      message:'La versión seleccionada no corresponde al modelo actual. Volvé a elegir la versión.'
+    };
+  }
+
+  if(!year||!(entry.years||[]).includes(year)){
+    return {
+      ok:false,
+      message:'Elegí un año disponible para esta versión.'
+    };
+  }
+
+  return {ok:true,entry,year};
+}
 function updateCoverageNote(){
   const el=$('#catalog-coverage');if(!el)return;const e=currentEntry();
   if(!e){el.textContent='El catálogo combina la guía mensual con DNRPA para ampliar marcas, modelos y versiones.';el.dataset.tone='neutral';return;}
@@ -375,18 +422,32 @@ function renderOpportunity(op,hasEnteredPrice){
   const clamped=Math.max(-20,Math.min(20,op.pct));$('#opportunity-marker').style.left=`${((clamped+20)/40)*100}%`;
 }
 
+$('#vehicle-form').addEventListener('invalid',e=>{
+  const field=e.target;
+  const label=field?.closest('label')?.querySelector('span')?.textContent?.trim()||'los datos obligatorios';
+  setCalculationStatus(`Revisá ${label.toLowerCase()} antes de calcular.`);
+},true);
+
 $('#vehicle-form').addEventListener('submit',async e=>{
   e.preventDefault();
-  const resultSection=$('#resultados');
-  if(resultSection)resultSection.hidden=true;
-  const entry=currentEntry(),year=$('#year').value;
-  if(!entry||!year){
-    return;
-  }
-  const km=Number($('#km').value)||0,fx=Number($('#fx-rate').value)||config.exchange_rate_ars_per_usd||1;
+
+  try{
+    const resultSection=$('#resultados');
+    if(resultSection)resultSection.hidden=true;
+
+    const selection=validatedSelection();
+
+    if(!selection.ok){
+      if(selection.repair)resetInvalidVehicleSelection();
+      setCalculationStatus(selection.message);
+      return;
+    }
+
+    const {entry,year}=selection;
+    const km=Number($('#km').value)||0,fx=Number($('#fx-rate').value)||config.exchange_rate_ars_per_usd||1;
   const dmatch=findDnrpaForEntry(entry,year),mestimate=marketEstimate(entry,year,fx,dmatch);
   if(!mestimate||!Number.isFinite(mestimate.amountARS)){
-    $('#data-status').textContent='No fue posible construir una referencia para esta combinación. Revisá la versión o actualizá las fuentes.';
+    setCalculationStatus('No hay datos suficientes para calcular esta combinación. No se consumió ninguna consulta.');
     return;
   }
   const factor=mileageFactor(year,km),guideARS=mestimate.amountARS,adjustedARS=guideARS*factor,adjustedUSD=adjustedARS/fx;
@@ -413,15 +474,22 @@ $('#vehicle-form').addEventListener('submit',async e=>{
 
   const consultationManager=window.FACIL_AUTO_GATE;
   if(!consultationManager||typeof consultationManager.consume!=='function'){
-    $('#data-status').textContent='No se pudo validar la consulta. Recargá la página e intentá nuevamente.';
+    setCalculationStatus('No se pudo validar la consulta. Recargá la página e intentá nuevamente.');
     return;
   }
 
   const consultationAllowed=await consultationManager.consume();
-  if(!consultationAllowed)return;
+  if(!consultationAllowed){
+    setCalculationStatus('La consulta no pudo autorizarse. Revisá tu sesión o tus consultas disponibles.');
+    return;
+  }
 
   if(resultSection)resultSection.hidden=false;
   $('#resultados').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){
+    console.error('FACIL AUTO calculation error:',err);
+    setCalculationStatus('Ocurrió un error al calcular esta combinación. No se consumió ninguna consulta.');
+  }
 });
 
 loadData().catch(showLoadError);

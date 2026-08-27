@@ -1,11 +1,12 @@
 /**
- * FACIL AUTO — Borrador persistente de consulta v1.5.20
+ * FACIL AUTO — Borrador persistente de consulta v1.5.38
  *
  * Conserva los datos del formulario durante el login con Google y los
  * reconstruye al regresar, incluyendo selects dependientes.
  */
 (() => {
   const STORAGE_KEY = 'facilauto_consultation_draft_v1';
+  const DRAFT_SCHEMA_VERSION = 2;
   const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
   const FIELD_IDS = [
@@ -71,7 +72,7 @@
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        version:1,
+        version:DRAFT_SCHEMA_VERSION,
         updated_at:Date.now(),
         context:currentContext(),
         values
@@ -95,6 +96,11 @@
     }
 
     if (!draft || !draft.values || !draft.updated_at) return null;
+
+    if (Number(draft.version) !== DRAFT_SCHEMA_VERSION) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
 
     if ((Date.now() - Number(draft.updated_at)) > MAX_AGE_MS) {
       localStorage.removeItem(STORAGE_KEY);

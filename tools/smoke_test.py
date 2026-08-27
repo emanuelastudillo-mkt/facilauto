@@ -11,13 +11,25 @@ assert len(market['rows'])>5000
 assert len(dnrpa['rows'])>10000
 assert len(rates['products'])>=10
 assert len(catalog['entries'])>len(market['rows'])
-assert config['version']=='0.06'
+assert config['version']=='0.09'
 assert config['opportunity']['market_offset_percent']==10
 # Toda fila de ambas fuentes debe quedar seleccionable en el catálogo, fusionada o individual.
 market_ids={x for e in catalog['entries'] for x in e.get('market_ids',[])}
 dnrpa_ids={x for e in catalog['entries'] for x in e.get('dnrpa_ids',[])}
 assert {r['id'] for r in market['rows']} <= market_ids
-assert {r['id'] for r in dnrpa['rows']} <= dnrpa_ids
+dnrpa_with_values={
+    r['id'] for r in dnrpa['rows']
+    if any(str(y).isdigit() and isinstance(v,(int,float)) and v>0
+           for y,v in (r.get('values_ars') or {}).items())
+}
+assert dnrpa_with_values <= dnrpa_ids
+assert all(e.get('years') for e in catalog['entries'])
+assert not any(
+    len(e.get('years',[])) == 46
+    and e['years'][0] == '2026'
+    and e['years'][-1] == '1981'
+    for e in catalog['entries']
+)
 # Un modelo ausente en la guía mensual pero presente en DNRPA debe aparecer.
 assert any(e['brand']=='CHEVROLET' and e['model']=='ASTRA' and e['source']=='dnrpa' for e in catalog['entries'])
 # Un modelo presente en ambas fuentes debe mantener las versiones de mercado y sumar DNRPA.
