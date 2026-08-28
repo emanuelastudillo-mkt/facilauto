@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es-AR" class="fa-quality-pending">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#111111">
+  <title>Calidad de datos | FACIL AUTO</title>
+  <style>.fa-quality-pending body{visibility:hidden}</style>
+  <link rel="stylesheet" href="../../assets/css/styles.css">
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=1.5.12">
+  <link rel="stylesheet" href="../../assets/css/calidad-datos.css?v=1.5.40">
+</head>
+<body class="admin-page quality-page">
+<header class="topbar">
+  <a class="wordmark" href="../../index.html"><strong>FACIL <span>AUTO</span></strong><small>OPERACIÓN AUTOMOTOR</small></a>
+  <nav class="topnav"><a href="../../admin.html">Control</a><a href="../migracion-d1/">D1</a></nav>
+  <a class="top-cta" href="../../admin.html">Volver</a>
+</header>
+
+<main class="admin-main admin-shell">
+  <section class="admin-head">
+    <div><span class="admin-kicker">CALIDAD DE DATOS</span><h1>Normalización<br>y revisión.</h1></div>
+    <p>Las decisiones de esta pantalla se guardan en D1. Los valores monetarios y datasets completos no se muestran.</p>
+  </section>
+
+  <section class="admin-summary">
+    <article class="admin-stat"><small>ALIASES APROBADOS</small><strong id="q-aliases">—</strong></article>
+    <article class="admin-stat"><small>CORRECCIONES ORIGEN</small><strong id="q-overrides">—</strong></article>
+    <article class="admin-stat"><small>PENDIENTES</small><strong id="q-pending">—</strong></article>
+    <article class="admin-stat"><small>REVISADOS</small><strong id="q-reviewed">—</strong></article>
+  </section>
+
+  <section class="admin-users">
+    <div class="admin-section-head">
+      <div><span class="admin-kicker">REGLAS</span><h2>Aliases activos</h2></div>
+      <p>Un alias modifica cómo agrupamos y mostramos un modelo; no fusiona valores por sí solo.</p>
+    </div>
+    <div id="quality-rules" class="quality-rule-list"><div class="admin-empty">Cargando reglas…</div></div>
+  </section>
+
+  <section class="admin-users">
+    <div class="admin-section-head">
+      <div><span class="admin-kicker">COLA</span><h2>Candidatos a revisar</h2></div>
+      <p>“Mismo vehículo” guarda la decisión, pero no mezcla valores automáticamente en esta etapa.</p>
+    </div>
+    <div class="quality-toolbar">
+      <select id="quality-status">
+        <option value="pending">Pendientes</option>
+        <option value="reviewed">Revisados</option>
+        <option value="all">Todos</option>
+      </select>
+      <button type="button" id="quality-refresh">ACTUALIZAR</button>
+    </div>
+    <div id="quality-review-list"><div class="admin-empty">Cargando candidatos…</div></div>
+  </section>
+</main>
+
+<footer class="admin-footer admin-shell">
+  <a class="wordmark compact" href="../../index.html"><strong>FACIL <span>AUTO</span></strong></a>
+  <p>Calidad de datos privada · v1.5.40</p>
+  <a href="../../admin.html">Panel de control</a>
+</footer>
+<script type="module" src="../../assets/js/calidad-datos.js?v=1.5.40"></script>
+</body>
+</html>

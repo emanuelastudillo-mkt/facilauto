@@ -1,6 +1,6 @@
 const $=s=>document.querySelector(s);
 const nowYear=new Date().getFullYear();
-let marketData,dnrpaData,ratesData,config,catalogData;
+let marketData,dnrpaData,ratesData,config,catalogData,catalogRules;
 let catalogByBrand=new Map(),catalogById=new Map(),marketById=new Map(),dnrpaById=new Map(),marketByBrandModel=new Map(),marketByBrand=new Map(),dnrpaByBrand=new Map(),dnrpaByBrandYear=new Map();
 let ratioByBrandYear=new Map(),ratioByYear=new Map(),allRatios=[];
 const fmtARS=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n):'—';
@@ -15,13 +15,27 @@ function median(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);
 function weightedAverage(items){let n=0,d=0;for(const i of items){if(Number.isFinite(i.value)&&Number.isFinite(i.weight)&&i.weight>0){n+=i.value*i.weight;d+=i.weight;}}return d?n/d:NaN;}
 function similarity(a,b){const A=new Set(tokens(a)),B=new Set(tokens(b));if(!A.size||!B.size)return 0;const inter=[...A].filter(x=>B.has(x)).length;return inter/Math.sqrt(A.size*B.size);}
 function marketKey(brand,model){return `${brand}|${model}`;}
+function canonicalBrand(value,dataset=''){
+  const raw=String(value||'').trim();
+  return String(catalogRules?.brand_overrides?.[dataset]?.[raw]||raw).trim();
+}
+function canonicalModel(brand,value){
+  const raw=String(value||'').trim();
+  const aliases=catalogRules?.model_aliases?.[String(brand||'').toUpperCase()]||{};
+  const target=norm(raw);
+  for(const [alias,canonical] of Object.entries(aliases)){
+    if(norm(alias)===target)return String(canonical).trim();
+  }
+  return raw;
+}
 
 const DATA_SOURCES=[
   ['data/vehicle_market.json','valores de mercado'],
   ['data/dnrpa.json','valuaciones DNRPA'],
   ['data/rates.json','tasas bancarias'],
   ['data/config.json','configuración'],
-  ['data/unified_catalog.json','catálogo unificado']
+  ['data/unified_catalog.json','catálogo unificado'],
+  ['data/catalog_aliases.json','aliases de catálogo']
 ];
 
 async function fetchJson(path,label){
@@ -58,8 +72,8 @@ function showLoadError(err){
 
 async function loadData(){
   if(location.protocol==='file:')throw new Error('La página fue abierta con file:// y el navegador bloquea los archivos JSON.');
-  const [m,d,r,c,u]=await Promise.all(DATA_SOURCES.map(([path,label])=>fetchJson(path,label)));
-  marketData=m;dnrpaData=d;ratesData=r;config=c;catalogData=u;
+  const [m,d,r,c,u,a]=await Promise.all(DATA_SOURCES.map(([path,label])=>fetchJson(path,label)));
+  marketData=m;dnrpaData=d;ratesData=r;config=c;catalogData=u;catalogRules=a||{};
   if(!Array.isArray(marketData.rows))throw new Error('data/vehicle_market.json no contiene rows[].');
   if(!Array.isArray(dnrpaData.rows))throw new Error('data/dnrpa.json no contiene rows[].');
   if(!Array.isArray(ratesData.products))throw new Error('data/rates.json no contiene products[].');
@@ -67,18 +81,21 @@ async function loadData(){
 
   for(const row of marketData.rows){
     marketById.set(row.id,row);
-    const key=marketKey(row.brand,row.model);
+    const brand=canonicalBrand(row.brand,'market');
+    const model=canonicalModel(brand,row.model);
+    const key=marketKey(brand,model);
     if(!marketByBrandModel.has(key))marketByBrandModel.set(key,[]);
     marketByBrandModel.get(key).push(row);
-    if(!marketByBrand.has(row.brand))marketByBrand.set(row.brand,[]);
-    marketByBrand.get(row.brand).push(row);
+    if(!marketByBrand.has(brand))marketByBrand.set(brand,[]);
+    marketByBrand.get(brand).push(row);
   }
   for(const row of dnrpaData.rows){
     dnrpaById.set(row.id,row);
-    if(!dnrpaByBrand.has(row.brand))dnrpaByBrand.set(row.brand,[]);
-    dnrpaByBrand.get(row.brand).push(row);
+    const brand=canonicalBrand(row.brand,'dnrpa');
+    if(!dnrpaByBrand.has(brand))dnrpaByBrand.set(brand,[]);
+    dnrpaByBrand.get(brand).push(row);
     for(const year of Object.keys(row.values_ars||{})){
-      const key=`${row.brand}|${year}`;
+      const key=`${brand}|${year}`;
       if(!dnrpaByBrandYear.has(key))dnrpaByBrandYear.set(key,[]);
       dnrpaByBrandYear.get(key).push(row);
     }

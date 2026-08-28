@@ -1,0 +1,138 @@
+{
+  "version": "1.5.40",
+  "description": "Aliases públicos no sensibles para normalizar marca/modelo. No contiene valores monetarios.",
+  "brand_overrides": {
+    "market": {
+      "4P 1,4 TDCI MAX EDGE ONE": "FORD"
+    }
+  },
+  "model_aliases": {
+    "AUDI": {
+      "Q 2": "Q2",
+      "Q 3": "Q3",
+      "Q 5": "Q5",
+      "Q 5 SPORTBACK": "Q5 SPORTBACK",
+      "Q 7": "Q7",
+      "Q 8": "Q8",
+      "RS Q8": "RSQ8"
+    },
+    "BMW": {
+      "218 I": "218I",
+      "220 I": "220I",
+      "320 I": "320I",
+      "428 I": "428I",
+      "430 I": "430I",
+      "435 I": "435I",
+      "440 I": "440I",
+      "530 I": "530I",
+      "535 I": "535I",
+      "540 I": "540I",
+      "640 I": "640I",
+      "650 I": "650I"
+    },
+    "CAN-AM": {
+      "DS 450": "DS450"
+    },
+    "CITROEN": {
+      "C 3": "C3",
+      "C 3 AIRCROSS": "C3 AIRCROSS",
+      "C 3 PICASSO": "C3 PICASSO",
+      "C 4": "C4",
+      "C 4 AIRCROSS": "C4 AIRCROSS",
+      "C 4 CACTUS": "C4 CACTUS",
+      "C 4 LOUNGE": "C4 LOUNGE",
+      "C 4 PICASSO": "C4 PICASSO",
+      "C 5": "C5",
+      "C 5 AIRCROSS": "C5 AIRCROSS",
+      "DS 3": "DS3",
+      "DS 4": "DS4"
+    },
+    "DS": {
+      "DS 3": "DS3",
+      "DS 7": "DS7"
+    },
+    "FAW": {
+      "X 40": "X40"
+    },
+    "FERRARI": {
+      "F 430": "F430",
+      "F 599": "F599"
+    },
+    "FIAT": {
+      "500 L": "500L",
+      "500 X": "500X"
+    },
+    "HAVAL": {
+      "H 6": "H6"
+    },
+    "HONDA": {
+      "CRV": "CR-V",
+      "F I T": "FIT"
+    },
+    "HYUNDAI": {
+      "GRAND I 10": "GRAND I10",
+      "H 1": "H1",
+      "H 100": "H100",
+      "H 350": "H350",
+      "I 10": "I10",
+      "I 30": "I30"
+    },
+    "LIFAN": {
+      "M 7": "M7",
+      "X 50": "X50",
+      "X 60": "X60",
+      "X 70": "X70"
+    },
+    "MERCEDES BENZ": {
+      "A 200": "A200",
+      "A 250": "A250",
+      "A 45": "A45",
+      "B 180": "B180",
+      "B 200": "B200",
+      "C 200": "C200",
+      "C 220": "C220",
+      "C 250": "C250",
+      "C 300": "C300",
+      "C 350": "C350",
+      "C 400": "C400",
+      "C 43": "C43",
+      "C 63": "C63",
+      "E 250": "E250",
+      "E 400": "E400",
+      "E 450": "E450",
+      "E 500": "E500",
+      "E 63": "E63",
+      "G 500": "G500",
+      "GLK 300": "GLK300",
+      "S 500": "S500"
+    },
+    "NISSAN": {
+      "X TERRA": "X-TERRA",
+      "XTERRA": "X-TERRA",
+      "X TRAIL": "X-TRAIL",
+      "XTRAIL": "X-TRAIL"
+    },
+    "SHINERAY": {
+      "T 30": "T30",
+      "T 32": "T32",
+      "X 30": "X30"
+    },
+    "SOUEAST": {
+      "DX 3": "DX3"
+    },
+    "TOYOTA": {
+      "RAV - 4": "RAV4"
+    },
+    "VOLVO": {
+      "C 30": "C30",
+      "S 40": "S40",
+      "S 60": "S60",
+      "S 90": "S90",
+      "V 40": "V40",
+      "V 60": "V60"
+    },
+    "ZANELLA": {
+      "Z CARGA": "ZCARGA"
+    }
+  }
+}

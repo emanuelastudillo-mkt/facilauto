@@ -7,10 +7,32 @@ ROOT = Path(__file__).resolve().parents[1]
 MARKET_PATH = ROOT / 'data' / 'vehicle_market.json'
 DNRPA_PATH = ROOT / 'data' / 'dnrpa.json'
 OUT_PATH = ROOT / 'data' / 'unified_catalog.json'
+RULES_PATH = ROOT / 'data' / 'catalog_aliases.json'
 
 STOP = {'DE','DEL','LA','EL','CON','CV','AT','MT','AUT','AUTO','MANUAL','SEDAN','RURAL','PICK','UP','TODO','TERRENO'}
 MODEL_NOISE = {'PICKUP','PICK-UP','PICK','UP'}
+
 MODIFIER_FIRST = {'GRAND','NEW','SANTA','LAND','RANGE','ALFA','CITROEN','DS'}
+
+def load_catalog_rules():
+    if not RULES_PATH.exists():
+        return {'brand_overrides':{}, 'model_aliases':{}}
+    return json.loads(RULES_PATH.read_text(encoding='utf-8'))
+
+CATALOG_RULES = load_catalog_rules()
+
+def canonical_brand(value, dataset=''):
+    raw = str(value or '').strip()
+    overrides = (CATALOG_RULES.get('brand_overrides') or {}).get(dataset, {})
+    return str(overrides.get(raw, raw)).strip()
+
+def canonical_model(brand, value):
+    raw = str(value or '').strip()
+    aliases = (CATALOG_RULES.get('model_aliases') or {}).get(str(brand).upper(), {})
+    for alias, canonical in aliases.items():
+        if norm(alias) == norm(raw):
+            return str(canonical).strip()
+    return raw
 
 
 def norm(value=''):
@@ -133,8 +155,10 @@ def main():
     market_rows_by_brand_model = defaultdict(list)
     for r in mrows:
         if r.get('brand') and r.get('model'):
-            market_models_by_brand[r['brand']].append(r['model'])
-            market_rows_by_brand_model[(r['brand'], r['model'])].append(r)
+            brand = canonical_brand(r.get('brand'), 'market')
+            model = canonical_model(brand, r.get('model'))
+            market_models_by_brand[brand].append(model)
+            market_rows_by_brand_model[(brand, model)].append(r)
     for brand in market_models_by_brand:
         market_models_by_brand[brand] = sorted(set(market_models_by_brand[brand]), key=lambda x: (-len(clean_model_key(x)), x))
 
@@ -144,11 +168,13 @@ def main():
 
     # Cada fila de la guía mensual nace como una versión seleccionable.
     for mr in mrows:
+        brand = canonical_brand(mr.get('brand',''), 'market')
+        model = canonical_model(brand, mr.get('model',''))
         e = {
             'id': f"u-{len(entries)+1}",
-            'brand': mr.get('brand',''),
-            'model': mr.get('model',''),
-            'variant': mr.get('variant','') or mr.get('model',''),
+            'brand': brand,
+            'model': model,
+            'variant': mr.get('variant','') or model,
             'market_ids': [mr['id']],
             'dnrpa_ids': [],
             'source': 'market',
@@ -163,10 +189,11 @@ def main():
     # DNRPA amplía la lista. Si puede asociarse a una versión de mercado con confianza,
     # se fusiona; de lo contrario se agrega como variante propia bajo el mejor modelo.
     for dr in drows:
-        brand = dr.get('brand','').strip()
+        brand = canonical_brand(dr.get('brand','').strip(), 'dnrpa')
         if not brand:
             continue
-        base_model = model_match(dr.get('model',''), market_models_by_brand.get(brand, []))
+        source_model = canonical_model(brand, dr.get('model',''))
+        base_model = model_match(source_model, market_models_by_brand.get(brand, []))
         best_entry = None
         best_score = 0.0
         if base_model:
@@ -182,7 +209,8 @@ def main():
             continue
 
         if not base_model:
-            base_model = fallback_base_model(dr.get('model',''))
+            base_model = fallback_base_model(source_model)
+        base_model = canonical_model(brand, base_model)
         body = trim_body(dr.get('body_type',''))
         label = dr.get('model','').strip() or base_model
         if body and norm(body) not in norm(label):

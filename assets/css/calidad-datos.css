@@ -1,0 +1,21 @@
+
+.quality-page .quality-rule-list{display:grid;gap:8px}
+.quality-rule{display:grid;grid-template-columns:180px 1fr 1fr;gap:12px;padding:12px;border:1px solid #d7d4cb;background:#fff}
+.quality-rule small{color:#777}.quality-rule strong{font-size:12px}
+.quality-toolbar{display:flex;gap:8px;margin:0 0 14px}
+.quality-toolbar select,.quality-toolbar button{min-height:40px;border:1px solid #111;background:#fff;padding:0 12px;font:700 10px Arial}
+.quality-toolbar button{background:#111;color:#fff;cursor:pointer}
+.quality-item{border:1px solid #d7d4cb;background:#fff;margin-bottom:10px;padding:14px}
+.quality-item-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.quality-item h3{margin:3px 0 6px;font-size:18px}
+.quality-item p{margin:0;color:#666;font-size:12px;line-height:1.45}
+.quality-variants{display:grid;gap:6px;margin-top:12px}
+.quality-variant{padding:8px 10px;background:#f5f3ed;border:1px solid #e5e1d7;font-size:11px}
+.quality-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.quality-actions button{border:1px solid #111;background:#fff;min-height:36px;padding:0 10px;font:800 9px Arial;cursor:pointer}
+.quality-actions button[data-action="merge"]{background:#111;color:#fff}
+.quality-decision{font-size:10px;font-weight:800;text-transform:uppercase}
+@media(max-width:700px){
+  .quality-rule{grid-template-columns:1fr}
+  .quality-item-head{flex-direction:column}
+}
