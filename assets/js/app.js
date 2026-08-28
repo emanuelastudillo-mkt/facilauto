@@ -8,7 +8,13 @@ const fmtUSD=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currenc
 const fmtPct=n=>Number.isFinite(n)?`${n.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})}%`:'—';
 function norm(s=''){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();}
 function tokens(s=''){return norm(s).split(/\s+/).filter(x=>x.length>1&&!['DE','DEL','LA','EL','CON','CV','AT','MT','SEDAN','RURAL','PICK','UP','TODO','TERRENO'].includes(x));}
-function uniqueSorted(a){return [...new Set(a)].sort((x,y)=>x.localeCompare(y,'es',{numeric:true}));}
+function uniqueSorted(a){
+  return [...new Set(a)].sort((x,y)=>{
+    const xn=Number(x),yn=Number(y);
+    if(Number.isFinite(xn)&&Number.isFinite(yn))return xn-yn;
+    return String(x).localeCompare(String(y),'es',{numeric:true});
+  });
+}
 function escapeHtml(s=''){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function setOptions(el,items,placeholder){el.innerHTML=`<option value="">${placeholder}</option>`+items.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');el.disabled=!items.length;}
 function median(values){const a=values.filter(Number.isFinite).sort((x,y)=>x-y);if(!a.length)return NaN;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
