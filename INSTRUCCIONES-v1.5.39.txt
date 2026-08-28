@@ -1,0 +1,27 @@
+FACIL AUTO v1.5.39 — Calidad de datos · Etapa 1
+
+OBJETIVO
+Crear una capa de auditoría privada antes de fusionar o renombrar registros.
+
+ARCHIVOS NUEVOS
+- tools/vehicle_normalization.py
+- tools/normalization_rules.json
+- tools/data_quality_scan.py
+- .gitignore
+
+SEGURIDAD
+- El escáner NO contiene valores monetarios en sus salidas.
+- Toda salida se genera dentro de private-data-quality/.
+- Esa carpeta queda ignorada por Git y NO debe subirse a GitHub Pages.
+- Esta etapa no cambia unified_catalog.json ni ningún valor productivo.
+
+QUÉ DETECTA
+- duplicados exactos después de normalizar puntuación/acentos;
+- versiones con los mismos tokens en distinto orden;
+- modelos escritos de formas equivalentes, por ejemplo C 3 / C3;
+- base para incorporar aliases y revisiones manuales.
+
+SIGUIENTE ETAPA
+Después de revisar los primeros grupos se crearán reglas aprobadas:
+raw source -> canonical record -> aliases.
+La fusión de valores nunca se hará solamente por similitud textual.

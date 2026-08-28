@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Reglas conservadoras para generar candidatos. No fusionan registros automáticamente.",
+  "token_aliases": {
+    "RURAL": "SW",
+    "BREAK": "SW",
+    "ESTATE": "SW",
+    "FAMILIAR": "SW",
+    "AUT": "AT",
+    "AUTOMATICO": "AT",
+    "AUTOMATICA": "AT",
+    "AUTOM": "AT",
+    "MAN": "MT",
+    "MANUAL": "MT",
+    "MECANICA": "MT",
+    "MECANICO": "MT",
+    "PUERTAS": "P",
+    "PUERTA": "P",
+    "PTAS": "P",
+    "PTA": "P",
+    "VALVULAS": "V",
+    "VALVULA": "V"
+  },
+  "stop_tokens": [
+    "DE",
+    "DEL",
+    "LA",
+    "EL",
+    "LOS",
+    "LAS",
+    "CON",
+    "SIN",
+    "TIPO",
+    "MODELO"
+  ],
+  "notes": [
+    "Las equivalencias son para detectar candidatos, no para fusionar valores.",
+    "SW/Rural/Break/Family se consideran equivalentes solo a nivel de carrocería.",
+    "AT/AUT y MT/Manual se normalizan como transmisión.",
+    "La aprobación final de una fusión debe ser manual o mediante una regla explícita."
+  ]
+}
