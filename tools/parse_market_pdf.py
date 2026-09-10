@@ -214,9 +214,12 @@ def parse_pdf(pdf_path):
                 label=' '.join(w['text'] for w in left).strip()
                 vals=line_values(ws,cols)
                 fonts=' '.join(w.get('fontname','') for w in left)
-                prepared.append({'top':line['top'],'ws':ws,'left':left,'label':label,'vals':vals,'italic':'Italic' in fonts})
+                prepared.append({
+                    'top':line['top'],'ws':ws,'left':left,'label':label,'vals':vals,
+                    'italic':'Italic' in fonts,'bold':'Bold' in fonts,
+                })
             for i,item in enumerate(prepared):
-                label=item['label']; vals=item['vals']; left=item['left']; italic=item['italic']
+                label=item['label']; vals=item['vals']; left=item['left']; italic=item['italic']; bold=item['bold']
                 if not label: continue
                 up=label.upper()
                 if 'US$' in up or up.startswith('AUTOS - PICK UPS') or up.startswith('VISITE NUESTRO'):
@@ -225,10 +228,9 @@ def parse_pdf(pdf_path):
                     if italic and left[0]['x0']<60:
                         model=label
                         continue
-                    # A brand line is bold/non-italic and is normally followed by an italic model line.
-                    nxt=prepared[i+1] if i+1<len(prepared) else None
-                    next_is_model=bool(nxt and not nxt['vals'] and nxt['italic'] and nxt['left'][0]['x0']<60)
-                    if next_is_model and left[0]['x0']<60 and len(label)<=45:
+                    # Brand headings can be the final line of a page, with the first model on the
+                    # following page. They are bold, non-italic and do not contain model digits.
+                    if bold and not italic and left[0]['x0']<60 and len(label)<=45 and not re.search(r'\d',label):
                         brand=label;model=''
                     continue
                 rows.append({'id':f'mkt-{page_no}-{len(rows)+1}','brand':brand,'model':model,'variant':label,'raw_values':vals,'page':page_no})
