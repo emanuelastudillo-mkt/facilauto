@@ -1,6 +1,6 @@
-# FACIL AUTO v0.06
+# FACIL AUTO v1.6.0
 
-Actualización incremental sobre FACIL AUTO v0.05.
+Sitio de cotización vehicular con actualización mensual centralizada.
 
 ## Incluye
 
@@ -10,10 +10,34 @@ Actualización incremental sobre FACIL AUTO v0.05.
 - Valuación DNRPA y transferencia estimada.
 - Tasas bancarias y simulación de financiación.
 - Herramientas de actualización de fuentes.
+- Catálogo público simplificado: autos, SUVs, pick-ups y utilitarios livianos.
+- Selectores con búsqueda por texto y filtro instantáneo.
+- Pulso de mercado y versión centralizados en `data/site_meta.json`.
+
+## Actualización mensual con 2 PDF
+
+No hace falta modificar las subpáginas. El comando procesa las dos fuentes,
+regenera el catálogo, actualiza el período visible y ejecuta las pruebas:
+
+```bash
+python tools/update_monthly.py "ruta/Autos mes 2026.pdf" "ruta/dd-mm-2026.pdf"
+```
+
+El pulso del mercado también se guarda una sola vez en `data/site_meta.json`.
+Si se desea actualizarlo desde el mismo comando, se agregan los valores ya
+verificados contra la publicación mensual de la CCA:
+
+```bash
+python tools/update_monthly.py "ruta/Autos mes 2026.pdf" "ruta/dd-mm-2026.pdf" --pulse-month Agosto --pulse-year 2026 --pulse-monthly 155246 --pulse-ytd 1203684 --pulse-leader 8647
+```
+
+El proceso valida primero ambos PDF y restaura los cuatro JSON anteriores si
+alguna etapa falla. Al finalizar informa exactamente qué archivos de datos
+deben subirse a GitHub.
 
 ## Publicación
 
-Copiá estos archivos sobre FACIL AUTO v0.05, manteniendo la estructura de directorios.
+Copiá el contenido manteniendo la estructura de directorios.
 La página debe servirse por HTTP/HTTPS. No funciona abriendo `index.html` directamente con `file://`, porque los navegadores bloquean la lectura de los JSON locales.
 
 ## Diagnóstico de carga

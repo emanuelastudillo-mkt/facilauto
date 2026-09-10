@@ -106,7 +106,8 @@ async function loadData(){
       dnrpaByBrandYear.get(key).push(row);
     }
   }
-  for(const entry of catalogData.entries){
+  const publicCatalogEntries=catalogData.entries.filter(entry=>entry.public!==false);
+  for(const entry of publicCatalogEntries){
     catalogById.set(entry.id,entry);
     if(!catalogByBrand.has(entry.brand))catalogByBrand.set(entry.brand,[]);
     catalogByBrand.get(entry.brand).push(entry);
@@ -115,7 +116,8 @@ async function loadData(){
 
   setOptions($('#brand'),uniqueSorted([...catalogByBrand.keys()]),'Elegí una marca');
   $('#fx-rate').value=config.exchange_rate_ars_per_usd||'';
-  $('#data-status').textContent=`${catalogData.stats.entries.toLocaleString('es-AR')} combinaciones seleccionables · ${marketData.rows.length.toLocaleString('es-AR')} referencias de mercado · ${dnrpaData.rows.length.toLocaleString('es-AR')} registros DNRPA`;
+  const publicCount=Number(catalogData.stats.public_entries)||publicCatalogEntries.length;
+  $('#data-status').textContent=`${publicCount.toLocaleString('es-AR')} versiones de autos y utilitarios listas para cotizar`;
   const marketDate=[marketData.report_month,marketData.report_year].filter(Boolean).join(' ')||'PDF mensual';
   $('#source-market-date').textContent=marketDate;$('#hero-market-date').textContent=marketDate;
   $('#source-dnrpa-date').textContent=dnrpaData.valid_from||'Tabla vigente';$('#hero-dnrpa-date').textContent=dnrpaData.valid_from||'DNRPA';
@@ -166,11 +168,9 @@ $('#year').addEventListener('change',updateCoverageNote);
 function setVariantOptions(entries){
   const el=$('#variant');
   if(!entries.length){setOptions(el,[],'Sin versiones');return;}
-  const main=entries.filter(e=>e.source!=='dnrpa').sort((a,b)=>a.variant.localeCompare(b.variant,'es',{numeric:true}));
-  const extra=entries.filter(e=>e.source==='dnrpa').sort((a,b)=>a.variant.localeCompare(b.variant,'es',{numeric:true}));
+  const sorted=[...entries].sort((a,b)=>a.variant.localeCompare(b.variant,'es',{numeric:true}));
   let html='<option value="">Elegí una versión</option>';
-  if(main.length)html+=`<optgroup label="Guía mensual + coincidencias">${main.map(e=>`<option value="${e.id}">${escapeHtml(e.variant)}</option>`).join('')}</optgroup>`;
-  if(extra.length)html+=`<optgroup label="Versiones adicionales DNRPA">${extra.map(e=>`<option value="${e.id}">${escapeHtml(e.variant)}</option>`).join('')}</optgroup>`;
+  html+=`<optgroup label="Versiones disponibles">${sorted.map(e=>`<option value="${e.id}">${escapeHtml(e.variant)}</option>`).join('')}</optgroup>`;
   el.innerHTML=html;el.disabled=false;
 }
 function currentEntry(){
@@ -501,6 +501,7 @@ $('#vehicle-form').addEventListener('submit',async e=>{
     return;
   }
 
+  setCalculationStatus('Validando la consulta…','loading');
   const consultationAllowed=await consultationManager.consume();
   if(!consultationAllowed){
     setCalculationStatus('La consulta no pudo autorizarse. Revisá tu sesión o tus consultas disponibles.');
@@ -508,6 +509,7 @@ $('#vehicle-form').addEventListener('submit',async e=>{
   }
 
   if(resultSection)resultSection.hidden=false;
+  setCalculationStatus('Consulta calculada con los datos más recientes.','ready');
   $('#resultados').scrollIntoView({behavior:'smooth',block:'start'});
   }catch(err){
     console.error('FACIL AUTO calculation error:',err);

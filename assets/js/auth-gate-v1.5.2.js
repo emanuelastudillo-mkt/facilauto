@@ -18,6 +18,7 @@
 
   const DEFAULT_ANON_LIMIT = 2;
   const DEFAULT_IP_LIMIT = 5;
+  const REQUEST_TIMEOUT_MS = 12000;
 
   let anonRemaining = null;
   let anonIpRemaining = null;
@@ -157,12 +158,16 @@
 
   async function requestJson(url, options = {}) {
     let response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
-      response = await fetch(url, {cache:'no-store', ...options});
+      response = await fetch(url, {cache:'no-store', ...options, signal:controller.signal});
     } catch (cause) {
-      const error = new Error('network_error');
+      const error = new Error(cause?.name === 'AbortError' ? 'request_timeout' : 'network_error');
       error.cause = cause;
       throw error;
+    } finally {
+      clearTimeout(timeout);
     }
 
     const data = await response.json().catch(() => ({}));
@@ -314,6 +319,8 @@
     if (busy) return false;
     busy = true;
     setButtonDisabled(true);
+    const button = submitButton();
+    if (button) button.setAttribute('aria-busy', 'true');
 
     try {
       return sessionToken()
@@ -322,6 +329,7 @@
     } finally {
       busy = false;
       setButtonDisabled(false);
+      if (button) button.removeAttribute('aria-busy');
     }
   }
 

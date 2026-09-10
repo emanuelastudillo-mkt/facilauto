@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/css/index-magic.css?v=1.5.18">
   <link rel="stylesheet" href="assets/css/mobile-polish.css?v=1.5.19">
   <link rel="stylesheet" href="assets/css/hero-market.css?v=1.5.27">
+  <link rel="stylesheet" href="assets/css/searchable-select-v1.6.0.css?v=1.6.0">
 
   <script type="application/ld+json">
   {
@@ -80,8 +81,8 @@
         <div class="hero-market-pulse" aria-label="Pulso del mercado argentino de autos usados">
           <div class="hero-market-pulse-head">
             <div class="hero-market-pulse-title">
-              <span>PULSO DEL MERCADO · JULIO 2026</span>
-              <small>Argentina · vehículos usados</small>
+              <span id="market-pulse-period">PULSO DEL MERCADO · AGOSTO 2026</span>
+              <small id="market-pulse-country">Argentina · vehículos usados</small>
             </div>
             <div class="hero-market-vectors" aria-hidden="true">
               <span class="hero-market-vector is-up">
@@ -104,18 +105,18 @@
                 </svg>
                 <small>Movimiento mensual</small>
               </div>
-              <strong data-market-count="156810">156.810</strong>
-              <span>usados comercializados en julio</span>
+              <strong id="market-pulse-monthly" data-market-count="155246">155.246</strong>
+              <span id="market-pulse-monthly-caption">usados comercializados en agosto</span>
             </div>
             <div class="hero-market-stat">
               <div class="hero-market-chip is-up">
                 <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                   <path d="M5 16.5 15.6 5.9h-5.1V4H19v8.5h-1.9V7.2L6.5 17.8z"></path>
                 </svg>
-                <small>Acumulado 2026</small>
+                <small id="market-pulse-ytd-label">Acumulado 2026</small>
               </div>
-              <strong data-market-count="1048438">1.048.438</strong>
-              <span>operaciones entre enero y julio</span>
+              <strong id="market-pulse-ytd" data-market-count="1203684">1.203.684</strong>
+              <span id="market-pulse-ytd-caption">operaciones entre enero y agosto</span>
             </div>
             <div class="hero-market-stat">
               <div class="hero-market-chip is-down">
@@ -124,11 +125,11 @@
                 </svg>
                 <small>Lectura de ranking</small>
               </div>
-              <strong data-market-count="8276">8.276</strong>
-              <span>Gol / Trend · líder usado del mes</span>
+              <strong id="market-pulse-leader" data-market-count="8647">8.647</strong>
+              <span id="market-pulse-leader-caption">Gol / Trend · líder usado del mes</span>
             </div>
           </div>
-          <p>Datos públicos del mercado automotor argentino. Actualización mensual.</p>
+          <p>Datos públicos del mercado automotor argentino. Fuente: <a id="market-pulse-source" href="https://cca.org.ar/en-agosto-se-comercializaron-155-246-autos-usados/" target="_blank" rel="noopener noreferrer">Cámara del Comercio Automotor (CCA)</a>.</p>
         </div>
 
         <a class="hero-link" href="#calculadora">Calcular mi vehículo <span>↘</span></a>
@@ -591,20 +592,21 @@
 
   <footer class="footer shell">
     <div class="wordmark compact"><strong>FACIL <span>AUTO</span></strong></div>
-    <p>Herramienta orientativa para operaciones automotores en Argentina. · v1.5.41</p>
+    <p>Herramienta orientativa para operaciones automotores en Argentina. · v1.6.0</p>
     <a href="privacidad.html">Privacidad</a>
   </footer>
 
-  <script src="assets/js/auth-gate-v1.5.2.js?v=1.5.36"></script>
+  <script src="assets/js/auth-gate-v1.5.2.js?v=1.6.0"></script>
   <script src="assets/js/privacy-mask-v1.5.4.js?v=1.5.6"></script>
   <script src="assets/js/seo-context-v1.5.6.js?v=1.5.18"></script>
   <script src="assets/js/form-draft-v1.5.20.js?v=1.5.38"></script>
-  <script src="assets/js/app.js?v=1.5.41"></script>
+  <script src="assets/js/app.js?v=1.6.0"></script>
+  <script src="assets/js/searchable-select-v1.6.0.js?v=1.6.0"></script>
   <script src="assets/js/finance-primary-v1.5.26.js?v=1.5.26"></script>
   <script src="assets/js/hero-market-animate-v1.5.27.js?v=1.5.27"></script>
   <script src="assets/js/insurance-model-v1.5.21.js?v=1.5.21"></script>
-  <script src="assets/js/frontend-v1.4.0.js?v=1.5.42"></script>
+  <script src="assets/js/frontend-v1.4.0.js?v=1.6.0"></script>
   <script src="assets/js/index-magic.js?v=1.5.18"></script>
-  <script type="module" src="servicios-auth.js?v=1.5.36"></script>
+  <script type="module" src="servicios-auth.js?v=1.6.0"></script>
 </body>
 </html>

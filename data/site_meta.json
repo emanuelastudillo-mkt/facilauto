@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "release": {
+    "version": "1.6.0",
+    "updated_at": "2026-09-10",
+    "label": "Datos septiembre 2026"
+  },
+  "valuation_data": {
+    "market_period": "Septiembre 2026",
+    "dnrpa_valid_from": "04/09/2026"
+  },
+  "market_pulse": {
+    "period": "Agosto 2026",
+    "country_label": "Argentina · vehículos usados",
+    "monthly_transactions": 155246,
+    "monthly_caption": "usados comercializados en agosto",
+    "year_to_date": 1203684,
+    "year_to_date_label": "Acumulado 2026",
+    "year_to_date_caption": "operaciones entre enero y agosto",
+    "leader_transactions": 8647,
+    "leader_caption": "Gol / Trend · líder usado del mes",
+    "source_name": "Cámara del Comercio Automotor (CCA)",
+    "source_url": "https://cca.org.ar/en-agosto-se-comercializaron-155-246-autos-usados/",
+    "ranking_source_url": "https://www.lanacion.com.ar/autos/el-mercado-de-autos-usados-volvio-a-caer-en-agosto-y-estos-fueron-los-10-mas-vendidos-nid04092026/",
+    "verified_at": "2026-09-10"
+  }
+}

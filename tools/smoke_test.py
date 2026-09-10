@@ -24,6 +24,18 @@ dnrpa_with_values={
 }
 assert dnrpa_with_values <= dnrpa_ids
 assert all(e.get('years') for e in catalog['entries'])
+public_entries=[e for e in catalog['entries'] if e.get('public')]
+assert catalog['stats']['public_entries']==len(public_entries)
+assert catalog['stats']['public_brands']==len({e['brand'] for e in public_entries})
+assert all(e.get('public') is True for e in catalog['entries'] if e.get('market_ids'))
+# El catálogo completo se conserva, pero motos y pesados no llegan al selector público.
+dnrpa_by_id={r['id']:r for r in dnrpa['rows']}
+assert any(e.get('public') is False and e.get('dnrpa_ids') for e in catalog['entries'])
+assert not any(
+    e.get('public') and e.get('source')=='dnrpa'
+    and any(str(dnrpa_by_id[did].get('code','')).strip().endswith(' M') for did in e.get('dnrpa_ids',[]))
+    for e in catalog['entries']
+)
 assert not any(
     len(e.get('years',[])) == 46
     and e['years'][0] == '2026'

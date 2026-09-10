@@ -14,6 +14,19 @@ MODEL_NOISE = {'PICKUP','PICK-UP','PICK','UP'}
 
 MODIFIER_FIRST = {'GRAND','NEW','SANTA','LAND','RANGE','ALFA','CITROEN','DS'}
 
+# El catálogo interno conserva todas las filas útiles de DNRPA. La interfaz pública,
+# en cambio, sólo ofrece autos, SUVs, pick-ups y utilitarios livianos. Así evitamos
+# mezclar motos, camiones, tractores y chasis con una cotización pensada para autos.
+PUBLIC_BODY = re.compile(
+    r'(SEDAN|RURAL|FAMILIAR|COUPE|DESCAPOTABLE|CONVERTIBLE|TODO\s+TERRENO|'
+    r'(^|\s)TERRENO($|\s)|PICK[\s-]*UP|FURGON|FURGONETA|UTILITARIO|JEEP|'
+    r'MONOVOLUMEN|MINIBUS|^[345]\s+PUERTAS$)'
+)
+EXCLUDED_PUBLIC_BODY = re.compile(
+    r'(MOTOCICLETA|SCOOTER|CICLOMOTOR|CUATRIC|CAMION|TRACTOR|CHASIS|'
+    r'PASAJEROS|ARENERO|TRICICLO|MOTONETA)'
+)
+
 def load_catalog_rules():
     if not RULES_PATH.exists():
         return {'brand_overrides':{}, 'model_aliases':{}}
@@ -59,6 +72,17 @@ def jaccard(a, b):
 def trim_body(value=''):
     # El parser DNRPA puede arrastrar una valuación al texto de carrocería.
     return re.sub(r'\s+\d{6,}(?:\.\d+)?\s*$', '', str(value)).strip()
+
+
+def is_public_dnrpa_vehicle(row):
+    """Marca filas aptas para el selector sin eliminar información de la base."""
+    code = str(row.get('code') or '').strip().upper()
+    body = norm(trim_body(row.get('body_type', '')))
+    if not code.endswith(' A') or not body:
+        return False
+    if EXCLUDED_PUBLIC_BODY.search(body):
+        return False
+    return bool(PUBLIC_BODY.search(body))
 
 
 def fallback_base_model(value):
@@ -178,6 +202,7 @@ def main():
             'market_ids': [mr['id']],
             'dnrpa_ids': [],
             'source': 'market',
+            'public': True,
         }
         entries.append(e)
         entry_by_market_id[mr['id']] = e
@@ -223,6 +248,7 @@ def main():
             'market_ids': [],
             'dnrpa_ids': [dr['id']],
             'source': 'dnrpa',
+            'public': is_public_dnrpa_vehicle(dr),
         }
         entries.append(e)
         entries_by_brand_model[(brand, base_model)].append(e)
@@ -260,8 +286,11 @@ def main():
             tgt['market_ids'] = sorted(set(tgt['market_ids'] + e['market_ids']))
             tgt['dnrpa_ids'] = sorted(set(tgt['dnrpa_ids'] + e['dnrpa_ids']))
             tgt['source'] = 'both' if tgt['market_ids'] and tgt['dnrpa_ids'] else ('market' if tgt['market_ids'] else 'dnrpa')
+            tgt['public'] = bool(tgt.get('public') or e.get('public'))
 
     brands = sorted(set(e['brand'] for e in deduped if e['brand']))
+    public_entries = [e for e in deduped if e.get('public')]
+    public_brands = sorted(set(e['brand'] for e in public_entries if e['brand']))
     out = {
         'generated_at': market.get('generated_at'),
         'market_report': f"{market.get('report_month','')} {market.get('report_year','')}".strip(),
@@ -269,6 +298,8 @@ def main():
         'stats': {
             'entries': len(deduped),
             'brands': len(brands),
+            'public_entries': len(public_entries),
+            'public_brands': len(public_brands),
             'market_rows': len(mrows),
             'dnrpa_rows': len(drows),
             'dnrpa_linked_to_market': matched_to_market,

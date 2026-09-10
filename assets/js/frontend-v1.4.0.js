@@ -379,29 +379,38 @@ function watchResults() {
   const result = document.querySelector('#resultados');
   if (!result) return;
 
-  const observer = new MutationObserver(() => {
-    queueMicrotask(() => {
-      sanitizeDynamicResult();
-      addResultIcons();
-      addSharePanel();
-    });
-  });
-
-  observer.observe(result, {
+  let refreshQueued = false;
+  const observerOptions = {
     subtree: true,
     childList: true,
     characterData: true,
     attributes: true,
     attributeFilter: ['hidden']
-  });
+  };
 
-  const form = document.querySelector('#vehicle-form');
-  form?.addEventListener('submit', () => {
-    setTimeout(() => {
+  const observe = () => observer.observe(result, observerOptions);
+  const refresh = () => {
+    if (refreshQueued) return;
+    refreshQueued = true;
+    requestAnimationFrame(() => {
+      // Estas funciones ajustan el mismo DOM observado. Desconectar durante la
+      // escritura evita una cadena infinita de microtareas después de calcular.
+      observer.disconnect();
       sanitizeDynamicResult();
       addResultIcons();
       addSharePanel();
-    }, 0);
+      refreshQueued = false;
+      observe();
+    });
+  };
+
+  const observer = new MutationObserver(refresh);
+
+  observe();
+
+  const form = document.querySelector('#vehicle-form');
+  form?.addEventListener('submit', () => {
+    setTimeout(refresh, 0);
   });
 }
 
@@ -438,13 +447,18 @@ function watchStatusAndCoverage() {
 
       if (id === 'catalog-coverage' && /guía|DNRPA|mercado|oficial/i.test(el.textContent)) {
         const original = el.textContent.toLowerCase();
+        let replacement;
         if (original.includes('combinada')) {
-          el.textContent = 'Cobertura combinada con datos oficiales y relevamientos de mercado.';
+          replacement = 'Cobertura combinada con datos oficiales y relevamientos de mercado.';
         } else if (original.includes('estim')) {
-          el.textContent = 'Referencia estimada con datos oficiales y vehículos comparables.';
+          replacement = 'Referencia estimada con datos oficiales y vehículos comparables.';
         } else {
-          el.textContent = GENERIC_COPY.coverage;
+          replacement = GENERIC_COPY.coverage;
         }
+
+        // Evita que el MutationObserver vuelva a dispararse indefinidamente al
+        // escribir el mismo texto que ya contiene las palabras observadas.
+        if (el.textContent !== replacement) el.textContent = replacement;
       }
     }).observe(el, {childList:true, characterData:true, subtree:true});
   });

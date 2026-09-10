@@ -3,10 +3,12 @@
  * Login Google + acceso a /cuenta.html · v1.3.1
  */
 
+import './assets/js/site-meta-v1.6.0.js';
+
 const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 const TOKEN_KEY = 'facilauto_session_v1';
 const REFERRAL_KEY = 'facilauto_referral_v1';
-const FRONTEND_VERSION = '1.5.35';
+const FRONTEND_VERSION = '1.6.0';
 const INSTAGRAM_URL = 'https://www.instagram.com/facilauto.ok';
 
 const SITE_ROOT = new URL('./', import.meta.url);
@@ -385,15 +387,18 @@ function ensureInstagramLink() {
 }
 
 function syncVisibleVersion() {
+  const visibleVersion = String(window.FACIL_AUTO_SITE_META?.release?.version || FRONTEND_VERSION);
   document.querySelectorAll('footer p').forEach(el => {
     if (/v\d+\.\d+\.\d+/.test(el.textContent || '')) {
       el.textContent = el.textContent.replace(
         /v\d+\.\d+\.\d+/g,
-        `v${FRONTEND_VERSION}`
+        `v${visibleVersion}`
       );
     }
   });
 }
+
+window.addEventListener('facilauto:site-meta', syncVisibleVersion);
 
 function syncGlobalUi(account = currentAccount) {
   syncPlansMenu(account);
