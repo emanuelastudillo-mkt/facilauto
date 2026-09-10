@@ -158,6 +158,28 @@ function rewriteSourcesSection() {
     }
   });
 }
+
+function addResultIcons() {
+  const defs = [
+    ['.valuation-strip', 'valuation'],
+    ['.transfer-strip', 'transfer'],
+    ['.close-strip', 'close'],
+    ['.finance-strip', 'finance'],
+    ['.insurance-strip', 'insurance']
+  ];
+
+  defs.forEach(([selector, icon]) => {
+    const summary = document.querySelector(`${selector} summary`);
+    if (!summary || summary.querySelector('.fa-result-icon')) return;
+    const index = summary.querySelector('.strip-index');
+    const holder = document.createElement('span');
+    holder.className = 'fa-result-icon';
+    holder.innerHTML = ICONS[icon];
+    if (index) index.insertAdjacentElement('afterend', holder);
+    else summary.prepend(holder);
+  });
+}
+
 function genericMethod(original='') {
   const value = String(original).toLowerCase();
   if (!value || value === '—') return 'Según datos oficiales y encuestas.';
