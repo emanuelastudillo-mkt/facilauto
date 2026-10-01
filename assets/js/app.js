@@ -1,7 +1,8 @@
 const $=s=>document.querySelector(s);
 const nowYear=new Date().getFullYear();
-let marketData,dnrpaData,ratesData,config,catalogData,catalogRules;
+let marketData,dnrpaData,ratesData,config,catalogData,catalogRules,marketHistoryData;
 let catalogByBrand=new Map(),catalogById=new Map(),marketById=new Map(),dnrpaById=new Map(),marketByBrandModel=new Map(),marketByBrand=new Map(),dnrpaByBrand=new Map(),dnrpaByBrandYear=new Map();
+let historyByPeriodBrandModel=new Map();
 let ratioByBrandYear=new Map(),ratioByYear=new Map(),allRatios=[];
 const fmtARS=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n):'—';
 const fmtUSD=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(n).replace('$','US$ '):'—';
@@ -41,7 +42,8 @@ const DATA_SOURCES=[
   ['data/rates.json','tasas bancarias'],
   ['data/config.json','configuración'],
   ['data/unified_catalog.json','catálogo unificado'],
-  ['data/catalog_aliases.json','aliases de catálogo']
+  ['data/catalog_aliases.json','aliases de catálogo'],
+  ['data/vehicle_history.json','historial mensual']
 ];
 
 async function fetchJson(path,label){
@@ -78,12 +80,13 @@ function showLoadError(err){
 
 async function loadData(){
   if(location.protocol==='file:')throw new Error('La página fue abierta con file:// y el navegador bloquea los archivos JSON.');
-  const [m,d,r,c,u,a]=await Promise.all(DATA_SOURCES.map(([path,label])=>fetchJson(path,label)));
-  marketData=m;dnrpaData=d;ratesData=r;config=c;catalogData=u;catalogRules=a||{};
+  const [m,d,r,c,u,a,h]=await Promise.all(DATA_SOURCES.map(([path,label])=>fetchJson(path,label)));
+  marketData=m;dnrpaData=d;ratesData=r;config=c;catalogData=u;catalogRules=a||{};marketHistoryData=h;
   if(!Array.isArray(marketData.rows))throw new Error('data/vehicle_market.json no contiene rows[].');
   if(!Array.isArray(dnrpaData.rows))throw new Error('data/dnrpa.json no contiene rows[].');
   if(!Array.isArray(ratesData.products))throw new Error('data/rates.json no contiene products[].');
   if(!Array.isArray(catalogData.entries))throw new Error('data/unified_catalog.json no contiene entries[].');
+  if(!Array.isArray(marketHistoryData.periods))throw new Error('data/vehicle_history.json no contiene periods[].');
 
   for(const row of marketData.rows){
     marketById.set(row.id,row);
@@ -104,6 +107,18 @@ async function loadData(){
       const key=`${brand}|${year}`;
       if(!dnrpaByBrandYear.has(key))dnrpaByBrandYear.set(key,[]);
       dnrpaByBrandYear.get(key).push(row);
+    }
+  }
+  for(const period of marketHistoryData.periods){
+    for(const compactRow of period.rows||[]){
+      if(!Array.isArray(compactRow)||compactRow.length<4)continue;
+      const brand=canonicalBrand(compactRow[0],'market');
+      const model=canonicalModel(brand,compactRow[1]);
+      const key=`${period.key}|${brand}|${model}`;
+      if(!historyByPeriodBrandModel.has(key))historyByPeriodBrandModel.set(key,[]);
+      historyByPeriodBrandModel.get(key).push({
+        brand,model,variant:String(compactRow[2]||''),prices:compactRow[3]||{}
+      });
     }
   }
   const publicCatalogEntries=catalogData.entries.filter(entry=>entry.public!==false);
@@ -255,6 +270,104 @@ function marketPriceToARS(price,fx){return price.currency==='USD'?price.amount*f
 function marketPriceToUSD(price,fx){return price.currency==='USD'?price.amount:price.amount/fx;}
 function literalMarketValue(price){return price.currency==='USD'?fmtUSD(price.amount):fmtARS(price.amount);}
 function sourceUnitText(price){if(price.currency==='USD'&&price.unit==='thousands')return `Fuente en miles de US$ · ${price.raw.toLocaleString('es-AR')} × 1.000`;if(price.currency==='USD')return 'La guía identifica este valor en US$';return `Fuente en miles de pesos · ${price.raw.toLocaleString('es-AR')} × 1.000`;}
+
+const MONTH_NUMBER={ENERO:1,FEBRERO:2,MARZO:3,ABRIL:4,MAYO:5,JUNIO:6,JULIO:7,AGOSTO:8,SEPTIEMBRE:9,SETIEMBRE:9,OCTUBRE:10,NOVIEMBRE:11,DICIEMBRE:12};
+function currentMarketPeriodKey(){
+  const month=MONTH_NUMBER[norm(marketData?.report_month)];
+  const year=Number(marketData?.report_year);
+  return month&&year?`${year}-${String(month).padStart(2,'0')}`:'';
+}
+function historyPriceToARS(price,fx){
+  if(!Array.isArray(price)||price.length<2)return NaN;
+  const amount=Number(price[0]);
+  if(!Number.isFinite(amount)||amount<=0)return NaN;
+  return String(price[1]).toUpperCase()==='USD'?amount*fx:amount;
+}
+function historicalValueForPeriod(entry,year,fx,period){
+  const rows=(historyByPeriodBrandModel.get(`${period.key}|${entry.brand}|${entry.model}`)||[])
+    .map(row=>({row,value:historyPriceToARS(row.prices?.[year],fx)}))
+    .filter(item=>Number.isFinite(item.value));
+  if(!rows.length)return null;
+
+  const targetVariants=new Set([
+    entry.variant,
+    ...(entry.market_ids||[]).map(id=>marketById.get(id)?.variant).filter(Boolean)
+  ].map(norm));
+  const exact=rows.filter(item=>targetVariants.has(norm(item.row.variant)));
+  if(exact.length){
+    return {value:median(exact.map(item=>item.value)),kind:'direct',basisCount:exact.length};
+  }
+
+  const target=`${entry.model} ${entry.variant}`;
+  const comparable=rows
+    .map(item=>({...item,score:similarity(target,`${item.row.model} ${item.row.variant}`)}))
+    .filter(item=>item.score>=.15)
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,5);
+  if(!comparable.length)return null;
+  const value=weightedAverage(comparable.map(item=>({value:item.value,weight:.2+item.score*2})));
+  return Number.isFinite(value)?{value,kind:'comparable',basisCount:comparable.length}:null;
+}
+function compactARS(value){
+  if(!Number.isFinite(value))return 'Sin dato';
+  if(Math.abs(value)>=1000000)return `$${(value/1000000).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})} M`;
+  return fmtARS(value);
+}
+function shortHistoryLabel(period){
+  const [year,month]=String(period.key).split('-').map(Number);
+  if(!year||!month)return period.label||period.key;
+  // El día 15 evita que UTC se convierta en el mes anterior en zonas horarias negativas.
+  const label=new Intl.DateTimeFormat('es-AR',{month:'short'}).format(new Date(Date.UTC(year,month-1,15)));
+  return `${label.replace('.','')} ${String(year).slice(-2)}`;
+}
+function renderVehicleHistory(entry,year,km,fx,currentValue,currentEstimate){
+  const panel=$('#vehicle-history-panel'),svg=$('#vehicle-history-chart'),periodsEl=$('#vehicle-history-periods');
+  if(!panel||!svg||!periodsEl)return;
+  const periods=[...(marketHistoryData?.periods||[])].sort((a,b)=>String(a.key).localeCompare(String(b.key))).slice(-3);
+  const currentKey=currentMarketPeriodKey();
+  const factor=mileageFactor(year,km);
+  const points=periods.map((period,index)=>{
+    if(period.key===currentKey){
+      return {period,index,value:currentValue,kind:currentEstimate?.exactPrice?'direct':'current-estimate',basisCount:currentEstimate?.basisCount||1};
+    }
+    const historical=historicalValueForPeriod(entry,year,fx,period);
+    return historical?{period,index,value:historical.value*factor,kind:historical.kind,basisCount:historical.basisCount}:{period,index,value:NaN,kind:'missing',basisCount:0};
+  });
+  const available=points.filter(point=>Number.isFinite(point.value));
+  panel.hidden=false;
+
+  const width=680,height=116,padX=28,padY=14;
+  const values=available.map(point=>point.value);
+  let min=Math.min(...values),max=Math.max(...values);
+  if(!Number.isFinite(min)||!Number.isFinite(max)){min=0;max=1;}
+  if(min===max){const spread=Math.max(1,min*.03);min-=spread;max+=spread;}
+  else{const spread=(max-min)*.18;min-=spread;max+=spread;}
+  const x=index=>periods.length<=1?width/2:padX+index*((width-padX*2)/(periods.length-1));
+  const y=value=>padY+(max-value)*(height-padY*2)/(max-min);
+  const path=available.map((point,index)=>`${index?'L':'M'} ${x(point.index).toFixed(1)} ${y(point.value).toFixed(1)}`).join(' ');
+  const grid=[.2,.5,.8].map(position=>`<line class="history-grid" x1="${padX}" y1="${(padY+(height-padY*2)*position).toFixed(1)}" x2="${width-padX}" y2="${(padY+(height-padY*2)*position).toFixed(1)}"></line>`).join('');
+  const marks=available.map(point=>`<circle class="history-point${point.period.key===currentKey?' is-current':''}" cx="${x(point.index).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="6"></circle>`).join('');
+  svg.innerHTML=`${grid}${available.length>1?`<path class="history-line" d="${path}"></path>`:''}${marks}`;
+  svg.setAttribute('aria-label',available.length>1
+    ? `Evolución de ${available.map(point=>`${point.period.label}: ${fmtARS(point.value)}`).join(', ')}`
+    : 'Todavía no hay suficientes meses comparables para dibujar una evolución.');
+
+  const kindLabel=point=>point.kind==='direct'?'Misma versión':point.kind==='comparable'?`${point.basisCount} comparables`:point.kind==='current-estimate'?'Estimación actual':'Sin referencia comparable';
+  periodsEl.innerHTML=points.map(point=>`<div class="vehicle-history-period${point.period.key===currentKey?' is-current':''}"><span>${escapeHtml(shortHistoryLabel(point.period))}${point.period.key===currentKey?' · actual':''}</span><strong>${escapeHtml(compactARS(point.value))}</strong><small>${escapeHtml(kindLabel(point))}</small></div>`).join('');
+
+  const first=available[0],last=available[available.length-1],change=$('#vehicle-history-change');
+  change.classList.remove('is-up','is-down');
+  if(available.length>1&&first.value>0){
+    const pct=(last.value-first.value)/first.value*100;
+    change.textContent=`${pct>=0?'+':''}${pct.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1})}% desde ${shortHistoryLabel(first.period)}`;
+    change.classList.add(pct>=0?'is-up':'is-down');
+  }else change.textContent='Historial en formación';
+
+  const directCount=points.filter(point=>point.kind==='direct').length;
+  $('#vehicle-history-note').textContent=available.length>1
+    ? `Valores mensuales comparables ajustados al kilometraje ingresado. ${directCount} período${directCount===1?'':'s'} con coincidencia de la misma versión; la cotización principal siempre usa el último mes disponible.`
+    : 'La serie comenzó a guardarse en agosto de 2026. Este vehículo todavía no tiene dos meses comparables; la cotización actual no se completa con datos inventados.';
+}
 
 function annualGrowthFromSeries(points){
   const sorted=[...points].sort((a,b)=>a.year-b.year),logs=[];
@@ -486,6 +599,8 @@ $('#vehicle-form').addEventListener('submit',async e=>{
   if(mestimate.exactPrice){$('#market-pdf-value').textContent=literalMarketValue(mestimate.exactPrice);$('#market-pdf-unit').textContent=sourceUnitText(mestimate.exactPrice);}else{$('#market-pdf-value').textContent='Sin valor exacto';$('#market-pdf-unit').textContent='Se usa una estimación, no una cifra literal del PDF';}
   $('#market-confidence').textContent=mestimate.confidence;$('#market-method').textContent=mestimate.method;$('#buy-value').textContent=fmtARS(buyARS);$('#sale-value').textContent=fmtARS(saleARS);
   const pages=uniqueSorted((mestimate.sourceRows||[]).map(r=>r.page).filter(Boolean));$('#market-source').textContent=`${marketData.source} · ${marketData.report_month||''} ${marketData.report_year||''}${pages.length?` · pág. ${pages.slice(0,4).join(', ')}${pages.length>4?'…':''}`:''} · Confianza ${mestimate.confidence.toLowerCase()}`;
+
+  renderVehicleHistory(entry,year,km,fx,adjustedARS,mestimate);
 
   $('#dnrpa-value').textContent=Number.isFinite(dval)?fmtARS(dval):year==='0km'?'No aplica a 0 km':'Sin referencia';
   const dstate=dmatch?(dmatch.kind==='exact'?'Exacta':dmatch.kind==='interpolated'?'Estimada entre años':dmatch.kind==='extrapolated'?'Proyectada desde año cercano':'Aproximada'):'Sin coincidencia';

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "release": {
-    "version": "1.6.0",
-    "updated_at": "2026-09-10",
-    "label": "Datos septiembre 2026"
+    "version": "1.7.0",
+    "updated_at": "2026-10-01",
+    "label": "Datos octubre 2026"
   },
   "valuation_data": {
-    "market_period": "Septiembre 2026",
-    "dnrpa_valid_from": "04/09/2026"
+    "market_period": "Octubre 2026",
+    "dnrpa_valid_from": "01/10/2026"
   },
   "market_pulse": {
     "period": "Agosto 2026",

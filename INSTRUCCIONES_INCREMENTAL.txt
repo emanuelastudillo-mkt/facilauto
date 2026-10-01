@@ -1,0 +1,18 @@
+FACIL AUTO v1.7.0 - ACTUALIZACION OCTUBRE 2026
+
+1. Descomprimir este ZIP sobre la raiz del repositorio de GitHub.
+2. Mantener exactamente la estructura de carpetas.
+3. Reemplazar los archivos existentes cuando se solicite.
+4. Subir tambien los tres archivos nuevos:
+   - assets/css/vehicle-history-v1.7.0.css
+   - data/vehicle_history.json
+   - tools/build_vehicle_history.py
+
+Contenido principal:
+- Guia de mercado Octubre 2026: 6.061 referencias.
+- DNRPA vigente desde 01/10/2026: 18.180 registros.
+- Catalogo unificado: 21.609 entradas internas y 15.718 publicas.
+- Historial Agosto-Septiembre-Octubre para el grafico de evolucion.
+- Actualizador mensual preparado para conservar automaticamente cada nuevo mes.
+
+No hace falta editar las subpaginas de forma individual.

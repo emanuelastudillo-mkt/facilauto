@@ -9,12 +9,15 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+from build_vehicle_history import empty_history, encode_history, merge_history
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / 'data'
 MARKET = DATA / 'vehicle_market.json'
 DNRPA = DATA / 'dnrpa.json'
 CATALOG = DATA / 'unified_catalog.json'
 SITE_META = DATA / 'site_meta.json'
+HISTORY = DATA / 'vehicle_history.json'
 
 
 def run(*parts):
@@ -119,14 +122,18 @@ def main():
         dnrpa_data = read_json(parsed_dnrpa)
         validate_parsed(market_data, dnrpa_data)
 
-        targets = (MARKET, DNRPA, CATALOG, SITE_META)
+        targets = (MARKET, DNRPA, CATALOG, SITE_META, HISTORY)
         backups = {path: path.read_bytes() if path.exists() else None for path in targets}
         try:
+            history = read_json(HISTORY) if HISTORY.exists() else empty_history()
+            history = merge_history(history, read_json(MARKET))
+            history = merge_history(history, market_data)
             atomic_bytes(MARKET, parsed_market.read_bytes())
             atomic_bytes(DNRPA, parsed_dnrpa.read_bytes())
             run(ROOT / 'tools' / 'build_unified_catalog.py')
             meta = update_meta(read_json(SITE_META), market_data, dnrpa_data, args)
             atomic_json(SITE_META, meta)
+            atomic_bytes(HISTORY, encode_history(history))
             run(ROOT / 'tools' / 'smoke_test.py')
             run(ROOT / 'tools' / 'data_quality_scan.py')
         except Exception:
@@ -140,7 +147,7 @@ def main():
     print(f"Mercado: {market_data['report_month']} {market_data['report_year']} · {len(market_data['rows']):,} filas")
     print(f"DNRPA: {dnrpa_data['valid_from']} · {len(dnrpa_data['rows']):,} filas")
     print(f"Catálogo: {catalog['stats']['entries']:,} internas · {catalog['stats']['public_entries']:,} públicas")
-    print('Archivos para GitHub: data/vehicle_market.json, data/dnrpa.json, data/unified_catalog.json, data/site_meta.json')
+    print('Archivos para GitHub: data/vehicle_market.json, data/dnrpa.json, data/unified_catalog.json, data/site_meta.json, data/vehicle_history.json')
 
 
 if __name__ == '__main__':
