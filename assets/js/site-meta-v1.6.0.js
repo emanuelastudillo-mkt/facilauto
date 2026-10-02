@@ -1,6 +1,13 @@
 const META_URL = new URL('../../data/site_meta.json', import.meta.url);
 
-const formatNumber = value => Number(value).toLocaleString('es-AR');
+const formatMetric = metric => {
+  const decimals = Number(metric?.decimals || 0);
+  const formatted = Number(metric?.value).toLocaleString('es-AR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return metric?.format === 'percent' ? `${formatted}%` : formatted;
+};
 
 function setText(selector, value) {
   const element = document.querySelector(selector);
@@ -18,30 +25,32 @@ function updateVersion(meta) {
   });
 }
 
-function updateMarketPulse(meta) {
-  const pulse = meta?.market_pulse;
+function updateHomePulse(meta) {
+  const pulse = meta?.home_pulse;
   if (!pulse) return;
 
-  setText('#market-pulse-period', `PULSO DEL MERCADO · ${String(pulse.period || '').toUpperCase()}`);
-  setText('#market-pulse-country', pulse.country_label);
-  setText('#market-pulse-monthly', formatNumber(pulse.monthly_transactions));
-  setText('#market-pulse-monthly-caption', pulse.monthly_caption);
-  setText('#market-pulse-ytd-label', pulse.year_to_date_label);
-  setText('#market-pulse-ytd', formatNumber(pulse.year_to_date));
-  setText('#market-pulse-ytd-caption', pulse.year_to_date_caption);
-  setText('#market-pulse-leader', formatNumber(pulse.leader_transactions));
-  setText('#market-pulse-leader-caption', pulse.leader_caption);
+  const title = String(pulse.title || 'Pulso de valuaciones').toUpperCase();
+  setText('#market-pulse-period', `${title} · ${String(pulse.period || '').toUpperCase()}`);
+  setText('#market-pulse-country', pulse.subtitle);
+  setText('#market-pulse-note', pulse.note);
 
-  ['#market-pulse-monthly', '#market-pulse-ytd', '#market-pulse-leader'].forEach(selector => {
-    const element = document.querySelector(selector);
-    if (element) element.dataset.marketCount = String(element.textContent).replace(/\D/g, '');
+  const targets = [
+    ['#market-pulse-monthly-label', '#market-pulse-monthly', '#market-pulse-monthly-caption'],
+    ['#market-pulse-ytd-label', '#market-pulse-ytd', '#market-pulse-ytd-caption'],
+    ['#market-pulse-leader-label', '#market-pulse-leader', '#market-pulse-leader-caption'],
+  ];
+  targets.forEach(([labelSelector, valueSelector, captionSelector], index) => {
+    const metric = pulse.metrics?.[index];
+    if (!metric) return;
+    setText(labelSelector, metric.label);
+    setText(valueSelector, formatMetric(metric));
+    setText(captionSelector, metric.caption);
+    const element = document.querySelector(valueSelector);
+    if (!element) return;
+    element.dataset.marketCount = String(metric.value);
+    element.dataset.marketDecimals = String(metric.decimals || 0);
+    element.dataset.marketSuffix = metric.format === 'percent' ? '%' : '';
   });
-
-  const source = document.querySelector('#market-pulse-source');
-  if (source && pulse.source_url) {
-    source.href = pulse.source_url;
-    source.textContent = pulse.source_name || 'Fuente oficial';
-  }
 }
 
 async function loadSiteMeta() {
@@ -50,7 +59,7 @@ async function loadSiteMeta() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const meta = await response.json();
     updateVersion(meta);
-    updateMarketPulse(meta);
+    updateHomePulse(meta);
     window.FACIL_AUTO_SITE_META = meta;
     window.dispatchEvent(new CustomEvent('facilauto:site-meta', {detail: meta}));
   } catch (error) {

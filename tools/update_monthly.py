@@ -46,13 +46,6 @@ def parse_args():
     parser.add_argument('market_pdf', type=Path, help='PDF mensual de autos, pick-ups y utilitarios')
     parser.add_argument('dnrpa_pdf', type=Path, help='PDF vigente de valuaciones DNRPA')
     parser.add_argument('--version', help='Versión pública del sitio, por ejemplo 1.6.1')
-    parser.add_argument('--pulse-month', help='Mes del pulso, por ejemplo Agosto')
-    parser.add_argument('--pulse-year', type=int)
-    parser.add_argument('--pulse-monthly', type=int, help='Operaciones del mes')
-    parser.add_argument('--pulse-ytd', type=int, help='Operaciones acumuladas del año')
-    parser.add_argument('--pulse-leader', type=int, help='Operaciones del Gol / Trend')
-    parser.add_argument('--pulse-source-url')
-    parser.add_argument('--ranking-source-url')
     return parser.parse_args()
 
 
@@ -67,7 +60,81 @@ def validate_parsed(market, dnrpa):
         raise ValueError('No se pudo determinar la vigencia del PDF DNRPA.')
 
 
-def update_meta(meta, market, dnrpa, args):
+def period_price_map(period):
+    prices = {}
+    for brand, model, variant, years in period.get('rows', []):
+        for year, price in years.items():
+            if not isinstance(price, list) or len(price) < 2:
+                continue
+            amount, currency = price[:2]
+            if isinstance(amount, (int, float)) and amount > 0:
+                key = (brand, model, variant, str(year), str(currency).upper())
+                prices[key] = amount
+    return prices
+
+
+def build_home_pulse(history, catalog, market):
+    periods = sorted(history.get('periods') or [], key=lambda period: period.get('key', ''))
+    if len(periods) < 2:
+        raise ValueError('El pulso de valuaciones requiere al menos dos meses de historial.')
+
+    previous, current = periods[-2:]
+    previous_prices = period_price_map(previous)
+    current_prices = period_price_map(current)
+    comparable = [
+        (previous_prices[key], amount)
+        for key, amount in current_prices.items()
+        if key in previous_prices
+    ]
+    if not comparable:
+        raise ValueError('No se encontraron precios comparables para el pulso de valuaciones.')
+
+    unchanged = sum(1 for before, after in comparable if before == after)
+    stable_percent = round(unchanged * 100 / len(comparable), 1)
+    public_entries = int(catalog.get('stats', {}).get('public_entries') or 0)
+    if public_entries <= 0:
+        raise ValueError('El catálogo no informó referencias públicas para el pulso de valuaciones.')
+
+    previous_label = str(previous.get('label') or '').strip()
+    current_label = str(current.get('label') or '').strip()
+    previous_month = previous_label.rsplit(' ', 1)[0].lower()
+    current_month = current_label.rsplit(' ', 1)[0].lower()
+    comparable_label = f'{len(comparable):,}'.replace(',', '.')
+    return {
+        'title': 'Pulso de valuaciones',
+        'period': current_label,
+        'subtitle': 'Base FACIL AUTO · vehículos usados',
+        'metrics': [
+            {
+                'label': 'Cobertura actual',
+                'value': public_entries,
+                'format': 'number',
+                'caption': 'vehículos y versiones disponibles para cotizar',
+            },
+            {
+                'label': 'Comparación mensual',
+                'value': len(comparable),
+                'format': 'number',
+                'caption': f'precios comparables entre {previous_month} y {current_month}',
+            },
+            {
+                'label': 'Estabilidad de valores',
+                'value': stable_percent,
+                'format': 'percent',
+                'decimals': 1,
+                'caption': f'sin cambios frente a {previous_month}',
+            },
+        ],
+        'note': (
+            f'Análisis propio sobre la guía de {current_month}, el catálogo público '
+            f'y {comparable_label} precios equivalentes del historial.'
+        ),
+        'generated_at': datetime.now().astimezone().isoformat(timespec='seconds'),
+        'market_rows': len(market.get('rows') or []),
+    }
+
+
+def update_meta(meta, market, dnrpa, catalog, history, args):
     month = str(market['report_month']).strip()
     year = int(market['report_year'])
     meta.setdefault('release', {})['updated_at'] = datetime.now().astimezone().date().isoformat()
@@ -79,27 +146,8 @@ def update_meta(meta, market, dnrpa, args):
         'dnrpa_valid_from': dnrpa['valid_from']
     }
 
-    pulse_values = [args.pulse_month, args.pulse_year, args.pulse_monthly, args.pulse_ytd, args.pulse_leader]
-    if any(value is not None for value in pulse_values):
-        if not all(value is not None for value in pulse_values):
-            raise ValueError('Para actualizar el pulso indicá mes, año, mensual, acumulado y líder.')
-        pulse = meta.setdefault('market_pulse', {})
-        pulse.update({
-            'period': f'{args.pulse_month} {args.pulse_year}',
-            'country_label': 'Argentina · vehículos usados',
-            'monthly_transactions': args.pulse_monthly,
-            'monthly_caption': f'usados comercializados en {args.pulse_month.lower()}',
-            'year_to_date': args.pulse_ytd,
-            'year_to_date_label': f'Acumulado {args.pulse_year}',
-            'year_to_date_caption': f'operaciones entre enero y {args.pulse_month.lower()}',
-            'leader_transactions': args.pulse_leader,
-            'leader_caption': 'Gol / Trend · líder usado del mes',
-            'verified_at': datetime.now().astimezone().date().isoformat()
-        })
-        if args.pulse_source_url:
-            pulse['source_url'] = args.pulse_source_url
-        if args.ranking_source_url:
-            pulse['ranking_source_url'] = args.ranking_source_url
+    meta.pop('market_pulse', None)
+    meta['home_pulse'] = build_home_pulse(history, catalog, market)
     return meta
 
 
@@ -131,7 +179,10 @@ def main():
             atomic_bytes(MARKET, parsed_market.read_bytes())
             atomic_bytes(DNRPA, parsed_dnrpa.read_bytes())
             run(ROOT / 'tools' / 'build_unified_catalog.py')
-            meta = update_meta(read_json(SITE_META), market_data, dnrpa_data, args)
+            catalog_data = read_json(CATALOG)
+            meta = update_meta(
+                read_json(SITE_META), market_data, dnrpa_data, catalog_data, history, args
+            )
             atomic_json(SITE_META, meta)
             atomic_bytes(HISTORY, encode_history(history))
             run(ROOT / 'tools' / 'smoke_test.py')

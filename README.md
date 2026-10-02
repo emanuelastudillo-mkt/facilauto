@@ -1,4 +1,4 @@
-# FACIL AUTO v1.7.0
+# FACIL AUTO v1.7.1
 
 Sitio de cotización vehicular con actualización mensual centralizada.
 
@@ -12,7 +12,7 @@ Sitio de cotización vehicular con actualización mensual centralizada.
 - Herramientas de actualización de fuentes.
 - Catálogo público simplificado: autos, SUVs, pick-ups y utilitarios livianos.
 - Selectores con búsqueda por texto y filtro instantáneo.
-- Pulso de mercado y versión centralizados en `data/site_meta.json`.
+- Pulso de valuaciones y versión centralizados en `data/site_meta.json`.
 - Historial mensual comparable del vehículo consultado, con valores de agosto,
   septiembre y octubre de 2026 cuando existe una referencia equivalente.
 
@@ -25,13 +25,10 @@ regenera el catálogo, actualiza el período visible y ejecuta las pruebas:
 python tools/update_monthly.py "ruta/Autos mes 2026.pdf" "ruta/dd-mm-2026.pdf"
 ```
 
-El pulso del mercado también se guarda una sola vez en `data/site_meta.json`.
-Si se desea actualizarlo desde el mismo comando, se agregan los valores ya
-verificados contra la publicación mensual de la CCA:
-
-```bash
-python tools/update_monthly.py "ruta/Autos mes 2026.pdf" "ruta/dd-mm-2026.pdf" --pulse-month Agosto --pulse-year 2026 --pulse-monthly 155246 --pulse-ytd 1203684 --pulse-leader 8647
-```
+El pulso de la home se recalcula automáticamente desde la base actualizada:
+cobertura pública, precios comparables contra el mes anterior y porcentaje de
+valores sin cambios. Ya no depende de cargar manualmente cifras de ventas de un
+informe externo que puede publicarse después que la guía de precios.
 
 Antes de reemplazar el mes vigente, el proceso lo incorpora automáticamente a
 `data/vehicle_history.json`. El historial usa la misma versión cuando está

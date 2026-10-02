@@ -8,6 +8,7 @@ rates=json.load(open(ROOT/'data/rates.json',encoding='utf-8'))
 catalog=json.load(open(ROOT/'data/unified_catalog.json',encoding='utf-8'))
 config=json.load(open(ROOT/'data/config.json',encoding='utf-8'))
 history=json.load(open(ROOT/'data/vehicle_history.json',encoding='utf-8'))
+site_meta=json.load(open(ROOT/'data/site_meta.json',encoding='utf-8'))
 assert len(market['rows'])>5000
 assert len(dnrpa['rows'])>10000
 assert len(rates['products'])>=10
@@ -18,6 +19,12 @@ assert history['schema_version']==1
 assert len(history['periods'])>=2
 assert history['periods']==sorted(history['periods'],key=lambda p:p['key'])
 assert all(len(period['rows'])>5000 for period in history['periods'])
+assert 'market_pulse' not in site_meta
+assert site_meta['home_pulse']['period']==history['periods'][-1]['label']
+assert len(site_meta['home_pulse']['metrics'])==3
+assert site_meta['home_pulse']['metrics'][0]['value']==catalog['stats']['public_entries']
+assert site_meta['home_pulse']['metrics'][1]['value']>10000
+assert 0 <= site_meta['home_pulse']['metrics'][2]['value'] <= 100
 # Toda fila de ambas fuentes debe quedar seleccionable en el catálogo, fusionada o individual.
 market_ids={x for e in catalog['entries'] for x in e.get('market_ids',[])}
 dnrpa_ids={x for e in catalog['entries'] for x in e.get('dnrpa_ids',[])}

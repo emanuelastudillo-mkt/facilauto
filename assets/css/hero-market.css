@@ -113,6 +113,10 @@
   stroke:#e94f32;
 }
 
+.hero-market-chip.is-neutral svg{
+  stroke:#01A5BC;
+}
+
 .hero-market-chip small{
   color:#7a7973;
   font-size:8px;

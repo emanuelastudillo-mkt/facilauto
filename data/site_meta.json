@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "release": {
-    "version": "1.7.0",
+    "version": "1.7.1",
     "updated_at": "2026-10-01",
     "label": "Datos octubre 2026"
   },
@@ -9,19 +9,33 @@
     "market_period": "Octubre 2026",
     "dnrpa_valid_from": "01/10/2026"
   },
-  "market_pulse": {
-    "period": "Agosto 2026",
-    "country_label": "Argentina · vehículos usados",
-    "monthly_transactions": 155246,
-    "monthly_caption": "usados comercializados en agosto",
-    "year_to_date": 1203684,
-    "year_to_date_label": "Acumulado 2026",
-    "year_to_date_caption": "operaciones entre enero y agosto",
-    "leader_transactions": 8647,
-    "leader_caption": "Gol / Trend · líder usado del mes",
-    "source_name": "Cámara del Comercio Automotor (CCA)",
-    "source_url": "https://cca.org.ar/en-agosto-se-comercializaron-155-246-autos-usados/",
-    "ranking_source_url": "https://www.lanacion.com.ar/autos/el-mercado-de-autos-usados-volvio-a-caer-en-agosto-y-estos-fueron-los-10-mas-vendidos-nid04092026/",
-    "verified_at": "2026-09-10"
+  "home_pulse": {
+    "title": "Pulso de valuaciones",
+    "period": "Octubre 2026",
+    "subtitle": "Base FACIL AUTO · vehículos usados",
+    "metrics": [
+      {
+        "label": "Cobertura actual",
+        "value": 15718,
+        "format": "number",
+        "caption": "vehículos y versiones disponibles para cotizar"
+      },
+      {
+        "label": "Comparación mensual",
+        "value": 17674,
+        "format": "number",
+        "caption": "precios comparables entre septiembre y octubre"
+      },
+      {
+        "label": "Estabilidad de valores",
+        "value": 92.9,
+        "format": "percent",
+        "decimals": 1,
+        "caption": "sin cambios frente a septiembre"
+      }
+    ],
+    "note": "Análisis propio sobre la guía de octubre, el catálogo público y 17.674 precios equivalentes del historial.",
+    "generated_at": "2026-10-01T22:00:31-03:00",
+    "market_rows": 6061
   }
 }

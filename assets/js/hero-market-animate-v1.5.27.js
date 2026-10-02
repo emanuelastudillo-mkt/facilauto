@@ -4,8 +4,12 @@
 (() => {
   const selector = '[data-market-count]';
 
-  function formatNumber(value) {
-    return new Intl.NumberFormat('es-AR').format(Math.round(value));
+  function formatNumber(value, decimals = 0, suffix = '') {
+    const formatted = new Intl.NumberFormat('es-AR', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+    return `${formatted}${suffix}`;
   }
 
   function animateCounter(el) {
@@ -13,6 +17,8 @@
 
     const target = Number(el.dataset.marketCount || 0);
     if (!Number.isFinite(target) || target <= 0) return;
+    const decimals = Math.max(0, Number(el.dataset.marketDecimals || 0));
+    const suffix = el.dataset.marketSuffix || '';
 
     el.dataset.marketAnimated = '1';
 
@@ -21,7 +27,7 @@
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
-      el.textContent = formatNumber(target);
+      el.textContent = formatNumber(target, decimals, suffix);
       return;
     }
 
@@ -32,12 +38,12 @@
       const progress = Math.min(1, (now - started) / duration);
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = target * eased;
-      el.textContent = formatNumber(current);
+      el.textContent = formatNumber(current, decimals, suffix);
 
       if (progress < 1) {
         requestAnimationFrame(frame);
       } else {
-        el.textContent = formatNumber(target);
+        el.textContent = formatNumber(target, decimals, suffix);
       }
     }
 

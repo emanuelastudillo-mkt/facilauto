@@ -1,18 +1,13 @@
-FACIL AUTO v1.7.0 - ACTUALIZACION OCTUBRE 2026
+FACIL AUTO v1.7.1 - Pulso de valuaciones de octubre 2026
 
-1. Descomprimir este ZIP sobre la raiz del repositorio de GitHub.
-2. Mantener exactamente la estructura de carpetas.
+1. Extraer este ZIP sobre la raiz del repositorio de GitHub.
+2. Conservar la estructura de carpetas assets, data y tools.
 3. Reemplazar los archivos existentes cuando se solicite.
-4. Subir tambien los tres archivos nuevos:
-   - assets/css/vehicle-history-v1.7.0.css
-   - data/vehicle_history.json
-   - tools/build_vehicle_history.py
+4. Publicar todos los archivos incluidos en este incremental.
 
-Contenido principal:
-- Guia de mercado Octubre 2026: 6.061 referencias.
-- DNRPA vigente desde 01/10/2026: 18.180 registros.
-- Catalogo unificado: 21.609 entradas internas y 15.718 publicas.
-- Historial Agosto-Septiembre-Octubre para el grafico de evolucion.
-- Actualizador mensual preparado para conservar automaticamente cada nuevo mes.
+La home deja de mostrar cifras fijas de ventas de agosto. El bloque ahora se
+calcula con los datos vigentes de la base: cobertura publica, precios
+comparables contra el mes anterior y estabilidad de valores.
 
-No hace falta editar las subpaginas de forma individual.
+En futuras actualizaciones mensuales, tools/update_monthly.py recalculara el
+apartado automaticamente despues de procesar los dos PDF.
