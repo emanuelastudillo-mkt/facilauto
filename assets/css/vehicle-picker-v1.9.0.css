@@ -1,0 +1,48 @@
+/* Shared by the home and every embedded quotation page. */
+.vehicle-fields{grid-template-columns:minmax(150px,1fr) minmax(0,2fr)!important;gap:24px!important;align-items:start}
+.vehicle-fields [hidden]{display:none!important}
+.vehicle-quick,.vehicle-manual{grid-column:1/-1;min-width:0}
+.vehicle-manual{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.vehicle-search-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.vehicle-search-top>label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#e9e7df}
+.vehicle-search-top button{border:0;border-bottom:1px solid #77766e;background:transparent;color:#d0cec5;font:inherit;font-size:12px;cursor:pointer;min-height:32px;padding:4px 0;white-space:nowrap}
+.vehicle-search-top button:hover,.vehicle-search-top button:focus-visible{color:#53d4e4;border-color:#53d4e4}
+.vehicle-combobox{position:relative;min-width:0}
+.vehicle-search-input{position:relative;display:flex;align-items:center;background:#232523;border:1px solid #676b65;border-radius:4px}
+.vehicle-search-input:focus-within{border-color:#38c5d6;box-shadow:0 0 0 2px #38c5d625}
+.vehicle-search-input>svg{width:22px;height:22px;margin-left:17px;flex:none;fill:none;stroke:#38c5d6;stroke-width:1.8}
+.vehicle-fields .vehicle-search-input input{border:0!important;background:transparent!important;padding:18px 42px 18px 13px!important;width:100%;min-width:0;color:#fff!important;font-size:18px;outline:0;box-shadow:none;min-height:62px}
+.vehicle-search-input>button{position:absolute;right:6px;top:9px;width:42px;height:42px;padding:0;border:0;background:transparent;color:#ccc;font-size:26px;cursor:pointer}
+.vehicle-field-help{font-size:12px;line-height:1.5;color:#babbb2;margin:8px 0 0}
+.vehicle-fields .vehicle-version-field>label>span{display:block;margin-bottom:8px}
+.vehicle-version-field{min-width:0}
+.vehicle-more-versions{margin:0 16px 12px;min-height:38px;padding:7px 12px;border:1px solid #80978f;border-radius:3px;background:#e1ece6;color:#234f42;font:inherit;font-size:12px;cursor:pointer}
+.vehicle-more-versions:focus-visible{outline:2px solid #38c5d6;outline-offset:3px}
+.vehicle-fields input::placeholder{color:#a8aaa1!important;opacity:1}
+.vehicle-fields input:disabled::placeholder{color:#7c8078!important}
+.vehicle-fields input[aria-invalid="true"]{outline:2px solid #ff9b83;outline-offset:2px}
+.vehicle-fields input:disabled,.vehicle-fields select:disabled{opacity:.6}
+.vehicle-suggestions{position:absolute;z-index:60;top:calc(100% + 5px);left:0;right:0;background:#f8f7f2;color:#181b18;border:1px solid #b6bbb3;border-radius:4px;box-shadow:0 14px 35px #0005;overflow:hidden}
+.vehicle-suggestions [role="listbox"]{max-height:310px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.vehicle-suggestions[data-placement="above"]{top:auto;bottom:calc(100% + 5px)}
+body:has(.vehicle-suggestions:not([hidden])) .fa-floating-quote{visibility:hidden!important;pointer-events:none!important}
+.vehicle-option{padding:12px 16px;cursor:pointer;border-bottom:1px solid #dce0d7;min-height:54px}
+.vehicle-option strong{font-size:15px;font-weight:650;line-height:1.4;display:block;overflow-wrap:anywhere}
+.vehicle-option small{font-size:11px;line-height:1.4;color:#62675f;display:block;margin-top:3px}
+.vehicle-option:hover,.vehicle-option[aria-selected="true"]{background:#def3ef;box-shadow:inset 3px 0 #008a9b}
+.vehicle-list-status{margin:0;padding:10px 16px;background:#ecefe8;font-size:11px;line-height:1.5;color:#4e574e}
+.vehicle-km-field{grid-column:1}
+.vehicle-picker-ready .coverage-note{grid-column:2;margin:0;background:transparent!important;color:#b8bdb2!important;border-left:1px solid #50564b;padding:8px 14px;font-size:12px;line-height:1.55;align-self:center}
+.vehicle-fields select,.vehicle-fields #vehicle-version-query{min-height:49px}
+@media(max-width:640px){
+  .vehicle-fields{grid-template-columns:1fr!important;gap:20px!important}
+  .vehicle-search-top{align-items:center;gap:8px}
+  .vehicle-search-top>label{font-size:10px;letter-spacing:.04em}
+  .vehicle-search-top button{font-size:11px}
+  .vehicle-fields .vehicle-search-input input{font-size:16px!important;padding-left:10px!important;min-height:58px}
+  .vehicle-search-input>svg{width:19px;margin-left:12px}
+  .vehicle-manual{grid-template-columns:1fr}
+  .vehicle-picker-ready .coverage-note{grid-column:1;font-size:11px}
+  .vehicle-suggestions [role="listbox"]{max-height:245px}
+}
+@media(max-width:360px){body{min-width:0!important}}

@@ -21,6 +21,7 @@
   ];
 
   let restoreRunning = false;
+  let userEdited = false;
   let pendingCalculation = false;
   let saveTimer = 0;
 
@@ -126,6 +127,7 @@
       const started = Date.now();
 
       const tick = () => {
+        if (userEdited) return resolve(false);
         let ok = false;
         try { ok = Boolean(test()); } catch (_) {}
 
@@ -188,17 +190,17 @@
   }
 
   async function restoreDraft() {
-    if (restoreRunning || !form()) return;
+    if (restoreRunning || userEdited || !form()) return;
     restoreRunning = true;
 
     try {
       const draft = readDraft();
       if (!draft) return;
 
-      const values = draft.values || {};
+      const values = {...(draft.values || {})};
       let restoredSomething = false;
 
-      // Reconstrucción ordenada: marca > modelo > versión > año.
+      // Reconstrucción ordenada: marca > modelo > año > versión.
       const brand = document.getElementById('brand');
 
       if (values.brand) {
@@ -206,6 +208,7 @@
           () => !brand?.disabled && optionExists(brand, values.brand)
         );
 
+        if (userEdited) return;
         if (ready) {
           brand.value = values.brand;
           dispatchChange(brand);
@@ -214,6 +217,9 @@
       }
 
       const model = document.getElementById('model');
+      const search = window.FACIL_AUTO_SEARCH;
+      const savedGroup = search && window.FACIL_AUTO_PICKER_DATA?.byId.get(search.familyKey(values.brand,values.model));
+      if (savedGroup) values.model = savedGroup.model;
 
       if (values.model && brand?.value === values.brand) {
         const ready = await waitFor(
@@ -221,6 +227,7 @@
           5000
         );
 
+        if (userEdited) return;
         if (ready) {
           model.value = values.model;
           dispatchChange(model);
@@ -228,32 +235,30 @@
         }
       }
 
-      const variant = document.getElementById('variant');
-
-      if (values.variant && model?.value === values.model) {
-        const ready = await waitFor(
-          () => !variant?.disabled && optionExists(variant, values.variant),
-          5000
-        );
-
-        if (ready) {
-          variant.value = values.variant;
-          dispatchChange(variant);
-          restoredSomething = true;
-        }
-      }
-
       const year = document.getElementById('year');
-
-      if (values.year && variant?.value === values.variant) {
+      if (values.year && model?.value === values.model) {
         const ready = await waitFor(
           () => !year?.disabled && optionExists(year, values.year),
           5000
         );
-
+        if (userEdited) return;
         if (ready) {
           year.value = values.year;
           dispatchChange(year);
+          restoredSomething = true;
+        }
+      }
+
+      const variant = document.getElementById('variant');
+      if (values.variant && model?.value === values.model && year?.value === values.year) {
+        const ready = await waitFor(
+          () => !variant?.disabled && optionExists(variant, values.variant),
+          5000
+        );
+        if (userEdited) return;
+        if (ready) {
+          variant.value = values.variant;
+          dispatchChange(variant);
           restoredSomething = true;
         }
       }
@@ -285,6 +290,13 @@
   function installAutosave() {
     const vehicleForm = form();
     if (!vehicleForm) return;
+
+    // A late catalog/draft response must never overwrite a new user search.
+    for (const eventName of ['focusin','pointerdown','keydown','input','change']) {
+      vehicleForm.addEventListener(eventName, event => {
+        if (eventName !== 'change' || event.isTrusted) userEdited = true;
+      }, true);
+    }
 
     vehicleForm.addEventListener('input', scheduleSave, true);
     vehicleForm.addEventListener('change', scheduleSave, true);

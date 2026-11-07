@@ -15,8 +15,8 @@
   function animateCounter(el) {
     if (!el || el.dataset.marketAnimated === '1') return;
 
-    const target = Number(el.dataset.marketCount || 0);
-    if (!Number.isFinite(target) || target <= 0) return;
+    const target = Number(el.dataset.marketCount);
+    if (el.dataset.marketCount === '' || !Number.isFinite(target) || target < 0) return;
     const decimals = Math.max(0, Number(el.dataset.marketDecimals || 0));
     const suffix = el.dataset.marketSuffix || '';
 
@@ -70,7 +70,8 @@
     items.forEach(item => observer.observe(item));
   }
 
-  document.readyState === 'loading'
-    ? document.addEventListener('DOMContentLoaded', init, { once:true })
-    : init();
+  // La animación comienza con los valores del JSON mensual ya cargado.
+  // Así nunca vuelve a escribir las cifras antiguas de una edición del HTML.
+  window.addEventListener('facilauto:site-meta', init, {once:true});
+  if (window.FACIL_AUTO_SITE_META) init();
 })();

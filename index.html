@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/css/index-magic.css?v=1.5.18">
   <link rel="stylesheet" href="assets/css/mobile-polish.css?v=1.5.19">
   <link rel="stylesheet" href="assets/css/hero-market.css?v=1.7.1">
-  <link rel="stylesheet" href="assets/css/searchable-select-v1.6.0.css?v=1.6.0">
+  <link rel="stylesheet" href="assets/css/vehicle-picker-v1.9.0.css?v=1.9.0">
   <link rel="stylesheet" href="assets/css/vehicle-history-v1.7.0.css?v=1.7.0">
 
   <script type="application/ld+json">
@@ -82,8 +82,8 @@
         <div class="hero-market-pulse" aria-label="Pulso de valuaciones de vehículos usados">
           <div class="hero-market-pulse-head">
             <div class="hero-market-pulse-title">
-              <span id="market-pulse-period">PULSO DE VALUACIONES · OCTUBRE 2026</span>
-              <small id="market-pulse-country">Base FACIL AUTO · vehículos usados</small>
+              <span id="market-pulse-period">PULSO DE VALUACIONES</span>
+              <small id="market-pulse-country">Base FACIL AUTO · usados y 0 km</small>
             </div>
           </div>
           <div class="hero-market-stats">
@@ -94,7 +94,7 @@
                 </svg>
                 <small id="market-pulse-monthly-label">Cobertura actual</small>
               </div>
-              <strong id="market-pulse-monthly" data-market-count="15718">15.718</strong>
+              <strong id="market-pulse-monthly" data-market-count="">—</strong>
               <span id="market-pulse-monthly-caption">vehículos y versiones disponibles para cotizar</span>
             </div>
             <div class="hero-market-stat">
@@ -104,8 +104,8 @@
                 </svg>
                 <small id="market-pulse-ytd-label">Comparación mensual</small>
               </div>
-              <strong id="market-pulse-ytd" data-market-count="17674">17.674</strong>
-              <span id="market-pulse-ytd-caption">precios comparables entre septiembre y octubre</span>
+              <strong id="market-pulse-ytd" data-market-count="">—</strong>
+              <span id="market-pulse-ytd-caption">precios comparables de las últimas dos guías</span>
             </div>
             <div class="hero-market-stat">
               <div class="hero-market-chip is-neutral">
@@ -114,11 +114,11 @@
                 </svg>
                 <small id="market-pulse-leader-label">Estabilidad de valores</small>
               </div>
-              <strong id="market-pulse-leader" data-market-count="92.9" data-market-decimals="1" data-market-suffix="%">92,9%</strong>
-              <span id="market-pulse-leader-caption">sin cambios frente a septiembre</span>
+              <strong id="market-pulse-leader" data-market-count="" data-market-decimals="1" data-market-suffix="%">—</strong>
+              <span id="market-pulse-leader-caption">sin cambios frente a la guía anterior</span>
             </div>
           </div>
-          <p id="market-pulse-note">Análisis propio sobre la guía de octubre, el catálogo público y 17.674 precios equivalentes del historial.</p>
+          <p id="market-pulse-note">Cargando el análisis de la última actualización…</p>
         </div>
 
         <a class="hero-link" href="#calculadora">Calcular mi vehículo <span>↘</span></a>
@@ -135,18 +135,35 @@
       <div class="shell">
         <div class="section-title">
           <span>02</span>
-          <div><p>CALCULADORA</p><h2>Armá la ficha del vehículo.</h2></div>
+          <div><p>COTIZÁ TU VEHÍCULO</p><h2>Encontrá tu auto. Conocé su valor.</h2></div>
         </div>
 
         <form id="vehicle-form" class="calc-layout" autocomplete="off">
           <div class="calc-block">
-            <div class="block-head"><b>A</b><div><span>Vehículo</span><small>El catálogo combina datos oficiales y relevamientos del mercado automotor para ampliar la cobertura.</small></div></div>
+            <div class="block-head"><b>A</b><div><span>Tu vehículo</span><small>Buscá el modelo, elegí el año y confirmá la versión.</small></div></div>
             <div class="field-grid vehicle-fields">
-              <label><span>Marca</span><select id="brand" required><option value="">Cargando marcas...</option></select></label>
-              <label><span>Modelo</span><select id="model" required disabled><option value="">Primero elegí marca</option></select></label>
-              <label class="field-wide"><span>Versión</span><select id="variant" required disabled><option value="">Primero elegí modelo</option></select></label>
-              <label><span>Año</span><select id="year" required disabled><option value="">Elegí versión</option></select></label>
-              <label><span>Kilometraje</span><div class="input-suffix"><input id="km" type="number" min="0" step="1000" placeholder="90.000"><i>km</i></div></label>
+              <div class="vehicle-quick" id="vehicle-quick" hidden>
+                <div class="vehicle-search-top"><label for="vehicle-query">1. Buscá tu modelo</label><button type="button" id="vehicle-manual-toggle" aria-expanded="false" aria-controls="vehicle-manual">Elegir por marca</button></div>
+                <div class="vehicle-combobox" id="model-combobox">
+                  <div class="vehicle-search-input"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="vehicle-query" type="text" role="combobox" aria-label="Buscá tu modelo" aria-autocomplete="list" aria-expanded="false" aria-controls="vehicle-model-list" aria-describedby="model-search-help" placeholder="Ej.: Gol 2018, Corolla o Hilux" autocomplete="off" spellcheck="false" disabled required><button type="button" id="vehicle-search-clear" aria-label="Borrar búsqueda" hidden>×</button></div>
+                  <div class="vehicle-suggestions" id="model-search-panel" hidden><div id="vehicle-model-list" role="listbox" aria-label="Modelos encontrados"></div><p class="vehicle-list-status" id="model-search-status" role="status"></p></div>
+                </div>
+                <p class="vehicle-field-help" id="model-search-help">Podés escribir la marca, el modelo y también el año.</p>
+              </div>
+              <div id="vehicle-manual" class="vehicle-manual">
+                <label><span>Marca</span><select id="brand" required><option value="">Cargando marcas...</option></select></label>
+                <label><span>Modelo</span><select id="model" required disabled><option value="">Primero elegí marca</option></select></label>
+              </div>
+              <label class="vehicle-year-field"><span>2. Año</span><select id="year" required disabled><option value="">Primero elegí el modelo</option></select></label>
+              <div class="vehicle-version-field">
+                <label for="variant"><span>3. Versión</span><select id="variant" required disabled><option value="">Primero elegí el año</option></select></label>
+                <div id="version-combobox" class="vehicle-combobox" hidden>
+                  <input id="vehicle-version-query" type="text" role="combobox" aria-label="Versión" aria-autocomplete="list" aria-expanded="false" aria-controls="vehicle-version-list" aria-describedby="version-search-help" placeholder="Primero elegí el año" autocomplete="off" spellcheck="false" disabled required>
+                  <div class="vehicle-suggestions" id="version-search-panel" hidden><div id="vehicle-version-list" role="listbox" aria-label="Versiones disponibles"></div><p class="vehicle-list-status" id="version-search-status" role="status"></p><button type="button" class="vehicle-more-versions" id="version-more" hidden>Ver todas las versiones</button></div>
+                </div>
+                <p class="vehicle-field-help" id="version-search-help">El año acorta la lista de versiones.</p>
+              </div>
+              <label class="vehicle-km-field"><span>Kilometraje · opcional</span><div class="input-suffix"><input id="km" type="number" min="0" step="1000" placeholder="Ej.: 90.000"><i>km</i></div></label>
               <p class="coverage-note" id="catalog-coverage" data-tone="neutral">El catálogo combina datos oficiales y relevamientos del mercado automotor para ampliar marcas, modelos y versiones.</p>
             </div>
           </div>
@@ -594,21 +611,22 @@
 
   <footer class="footer shell">
     <div class="wordmark compact"><strong>FACIL <span>AUTO</span></strong></div>
-    <p>Herramienta orientativa para operaciones automotores en Argentina. · v1.7.1</p>
+    <p>Herramienta orientativa para operaciones automotores en Argentina. · v1.9.0</p>
     <a href="privacidad.html">Privacidad</a>
   </footer>
 
   <script src="assets/js/auth-gate-v1.5.2.js?v=1.6.0"></script>
   <script src="assets/js/privacy-mask-v1.5.4.js?v=1.5.6"></script>
   <script src="assets/js/seo-context-v1.5.6.js?v=1.5.18"></script>
-  <script src="assets/js/form-draft-v1.5.20.js?v=1.5.38"></script>
-  <script src="assets/js/app.js?v=1.7.0"></script>
-  <script src="assets/js/searchable-select-v1.6.0.js?v=1.6.0"></script>
+  <script src="assets/js/form-draft-v1.5.20.js?v=1.9.0"></script>
+  <script src="assets/js/vehicle-search-core-v1.9.0.js?v=1.9.0"></script>
+  <script src="assets/js/app.js?v=1.9.0"></script>
+  <script src="assets/js/vehicle-picker-v1.9.0.js?v=1.9.0"></script>
   <script src="assets/js/finance-primary-v1.5.26.js?v=1.5.26"></script>
-  <script src="assets/js/hero-market-animate-v1.5.27.js?v=1.7.1"></script>
+  <script src="assets/js/hero-market-animate-v1.5.27.js?v=1.8.0"></script>
   <script src="assets/js/insurance-model-v1.5.21.js?v=1.5.21"></script>
-  <script src="assets/js/frontend-v1.4.0.js?v=1.7.0"></script>
+  <script src="assets/js/frontend-v1.4.0.js?v=1.9.0"></script>
   <script src="assets/js/index-magic.js?v=1.5.18"></script>
-  <script type="module" src="servicios-auth.js?v=1.7.1"></script>
+  <script type="module" src="servicios-auth.js?v=1.9.0"></script>
 </body>
 </html>

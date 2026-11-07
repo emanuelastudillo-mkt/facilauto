@@ -3,12 +3,12 @@
  * Login Google + acceso a /cuenta.html · v1.3.1
  */
 
-import './assets/js/site-meta-v1.6.0.js';
+import './assets/js/site-meta-v1.6.0.js?v=1.9.0';
 
 const API_BASE = 'https://facilauto-auth.emanuelmkt.workers.dev';
 const TOKEN_KEY = 'facilauto_session_v1';
 const REFERRAL_KEY = 'facilauto_referral_v1';
-const FRONTEND_VERSION = '1.7.1';
+const FRONTEND_VERSION = '1.9.0';
 const INSTAGRAM_URL = 'https://www.instagram.com/facilauto.ok';
 
 const SITE_ROOT = new URL('./', import.meta.url);

@@ -103,7 +103,7 @@ def build_home_pulse(history, catalog, market):
     return {
         'title': 'Pulso de valuaciones',
         'period': current_label,
-        'subtitle': 'Base FACIL AUTO · vehículos usados',
+        'subtitle': 'Base FACIL AUTO · usados y 0 km',
         'metrics': [
             {
                 'label': 'Cobertura actual',
@@ -198,6 +198,8 @@ def main():
     print(f"Mercado: {market_data['report_month']} {market_data['report_year']} · {len(market_data['rows']):,} filas")
     print(f"DNRPA: {dnrpa_data['valid_from']} · {len(dnrpa_data['rows']):,} filas")
     print(f"Catálogo: {catalog['stats']['entries']:,} internas · {catalog['stats']['public_entries']:,} públicas")
+    if market_data.get('price_warnings'):
+        print(f"REVISAR: {len(market_data['price_warnings'])} importes no publicados por moneda ambigua; ver data/vehicle_market.json > price_warnings.")
     print('Archivos para GitHub: data/vehicle_market.json, data/dnrpa.json, data/unified_catalog.json, data/site_meta.json, data/vehicle_history.json')
 
 

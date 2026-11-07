@@ -74,10 +74,10 @@ function renameStaticCopy() {
   }
 
   document.querySelectorAll('.block-head small').forEach((el, index) => {
-    if (index === 0) el.textContent = GENERIC_COPY.coverage;
+    if (index === 0 && !document.getElementById('vehicle-query')) el.textContent = GENERIC_COPY.coverage;
   });
 
-  text('#catalog-coverage', GENERIC_COPY.coverage);
+  text('#catalog-coverage', document.getElementById('vehicle-query')?'Buscá tu modelo y elegí el año para ver las versiones compatibles.':GENERIC_COPY.coverage);
 
   const labels = {
     '#market-pdf-value': 'Valor de referencia',

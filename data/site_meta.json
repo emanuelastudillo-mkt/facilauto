@@ -1,41 +1,41 @@
 {
   "schema_version": 1,
   "release": {
-    "version": "1.7.1",
-    "updated_at": "2026-10-01",
-    "label": "Datos octubre 2026"
+    "version": "1.9.0",
+    "updated_at": "2026-11-06",
+    "label": "Datos noviembre 2026"
   },
   "valuation_data": {
-    "market_period": "Octubre 2026",
-    "dnrpa_valid_from": "01/10/2026"
+    "market_period": "Noviembre 2026",
+    "dnrpa_valid_from": "01/11/2026"
   },
   "home_pulse": {
     "title": "Pulso de valuaciones",
-    "period": "Octubre 2026",
-    "subtitle": "Base FACIL AUTO · vehículos usados",
+    "period": "Noviembre 2026",
+    "subtitle": "Base FACIL AUTO · usados y 0 km",
     "metrics": [
       {
         "label": "Cobertura actual",
-        "value": 15718,
+        "value": 15735,
         "format": "number",
         "caption": "vehículos y versiones disponibles para cotizar"
       },
       {
         "label": "Comparación mensual",
-        "value": 17674,
+        "value": 17697,
         "format": "number",
-        "caption": "precios comparables entre septiembre y octubre"
+        "caption": "precios comparables entre octubre y noviembre"
       },
       {
         "label": "Estabilidad de valores",
-        "value": 92.9,
+        "value": 9.8,
         "format": "percent",
         "decimals": 1,
-        "caption": "sin cambios frente a septiembre"
+        "caption": "sin cambios frente a octubre"
       }
     ],
-    "note": "Análisis propio sobre la guía de octubre, el catálogo público y 17.674 precios equivalentes del historial.",
-    "generated_at": "2026-10-01T22:00:31-03:00",
-    "market_rows": 6061
+    "note": "Análisis propio sobre la guía de noviembre, el catálogo público y 17.697 precios equivalentes del historial.",
+    "generated_at": "2026-11-06T23:04:49-03:00",
+    "market_rows": 6083
   }
 }

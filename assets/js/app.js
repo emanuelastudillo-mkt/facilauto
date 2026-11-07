@@ -3,6 +3,7 @@ const nowYear=new Date().getFullYear();
 let marketData,dnrpaData,ratesData,config,catalogData,catalogRules,marketHistoryData;
 let catalogByBrand=new Map(),catalogById=new Map(),marketById=new Map(),dnrpaById=new Map(),marketByBrandModel=new Map(),marketByBrand=new Map(),dnrpaByBrand=new Map(),dnrpaByBrandYear=new Map();
 let historyByPeriodBrandModel=new Map();
+let vehicleSearchIndex=null;
 let ratioByBrandYear=new Map(),ratioByYear=new Map(),allRatios=[];
 const fmtARS=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n):'—';
 const fmtUSD=n=>Number.isFinite(n)?new Intl.NumberFormat('es-AR',{style:'currency',currency:'USD',currencyDisplay:'narrowSymbol',maximumFractionDigits:0}).format(n).replace('$','US$ '):'—';
@@ -122,6 +123,7 @@ async function loadData(){
     }
   }
   const publicCatalogEntries=catalogData.entries.filter(entry=>entry.public!==false);
+  vehicleSearchIndex=window.FACIL_AUTO_SEARCH.buildIndex(publicCatalogEntries);
   for(const entry of publicCatalogEntries){
     catalogById.set(entry.id,entry);
     if(!catalogByBrand.has(entry.brand))catalogByBrand.set(entry.brand,[]);
@@ -138,6 +140,8 @@ async function loadData(){
   $('#source-dnrpa-date').textContent=dnrpaData.valid_from||'Tabla vigente';$('#hero-dnrpa-date').textContent=dnrpaData.valid_from||'DNRPA';
   $('#source-rates-date').textContent=ratesData.updated_at?new Date(ratesData.updated_at+'T12:00:00').toLocaleDateString('es-AR'):'Actualizable';
   $('#hero-rates-count').textContent=`${ratesData.products.length} alternativas`;
+  window.FACIL_AUTO_PICKER_DATA=vehicleSearchIndex;
+  window.dispatchEvent?.(new CustomEvent('facilauto:catalog-ready'));
 }
 
 function buildMarketDnrpaRatios(){
@@ -166,33 +170,46 @@ function buildMarketDnrpaRatios(){
 }
 
 $('#brand').addEventListener('change',()=>{
-  const rows=catalogByBrand.get($('#brand').value)||[];
-  setOptions($('#model'),uniqueSorted(rows.map(r=>r.model).filter(Boolean)),'Elegí un modelo');
-  setOptions($('#variant'),[],'Primero elegí modelo');setOptions($('#year'),[],'Elegí versión');updateCoverageNote();
+  const groups=(vehicleSearchIndex?.groups||[]).filter(g=>g.brand===$('#brand').value);
+  const select=$('#model');
+  select.innerHTML='<option value="">Elegí un modelo</option>'+groups.sort((a,b)=>a.label.localeCompare(b.label,'es',{numeric:true})).map(g=>`<option value="${escapeHtml(g.model)}">${escapeHtml(g.label)}</option>`).join('');select.disabled=!groups.length;
+  setOptions($('#variant'),[],'Primero elegí el año');setOptions($('#year'),[],'Primero elegí el modelo');updateCoverageNote();
 });
 $('#model').addEventListener('change',()=>{
-  const entries=(catalogByBrand.get($('#brand').value)||[]).filter(r=>r.model===$('#model').value);
-  setVariantOptions(entries);setOptions($('#year'),[],'Elegí versión');updateCoverageNote();
+  const group=currentModelGroup();
+  const years=group?.years||[];
+  const el=$('#year');el.innerHTML='<option value="">Elegí el año</option>'+years.map(y=>`<option value="${y}">${y==='0km'?'0 km':y}</option>`).join('');el.disabled=!years.length;
+  setOptions($('#variant'),[],'Primero elegí el año');updateCoverageNote();
 });
 $('#variant').addEventListener('change',()=>{
-  const entry=currentEntry();if(!entry){setOptions($('#year'),[],'Elegí versión');updateCoverageNote();return;}
-  const el=$('#year');el.innerHTML='<option value="">Elegí año</option>'+entry.years.map(y=>`<option value="${y}">${y==='0km'?'0 km / actual':y}</option>`).join('');el.disabled=false;updateCoverageNote();
+  updateCoverageNote();
 });
-$('#year').addEventListener('change',updateCoverageNote);
+$('#year').addEventListener('change',()=>{refreshVersions();updateCoverageNote();});
+
+function currentModelGroup(){
+  return vehicleSearchIndex?.byId.get(window.FACIL_AUTO_SEARCH.familyKey($('#brand').value,$('#model').value))||null;
+}
+function refreshVersions(){
+  const previous=$('#variant').value;
+  const entries=window.FACIL_AUTO_SEARCH.versions(currentModelGroup(),$('#year').value);
+  setVariantOptions(entries);
+  if(entries.some(e=>e.id===previous))$('#variant').value=previous;
+  else if(entries.length===1)$('#variant').value=entries[0].id;
+}
 
 function setVariantOptions(entries){
   const el=$('#variant');
   if(!entries.length){setOptions(el,[],'Sin versiones');return;}
-  const sorted=[...entries].sort((a,b)=>a.variant.localeCompare(b.variant,'es',{numeric:true}));
+  const sorted=entries;
   let html='<option value="">Elegí una versión</option>';
-  html+=`<optgroup label="Versiones disponibles">${sorted.map(e=>`<option value="${e.id}">${escapeHtml(e.variant)}</option>`).join('')}</optgroup>`;
+  html+=`<optgroup label="Versiones disponibles">${sorted.map(e=>`<option value="${e.id}">${escapeHtml(window.FACIL_AUTO_SEARCH.versionLabel(e))}</option>`).join('')}</optgroup>`;
   el.innerHTML=html;el.disabled=false;
 }
 function currentEntry(){
   const entry=catalogById.get($('#variant').value)||null;
   if(!entry)return null;
   if(entry.brand!==$('#brand').value)return null;
-  if(entry.model!==$('#model').value)return null;
+  if(!currentModelGroup()?.entries.some(e=>e.id===entry.id))return null;
   return entry;
 }
 function setCalculationStatus(message,state='error'){
@@ -202,11 +219,7 @@ function setCalculationStatus(message,state='error'){
   status.textContent=message;
 }
 function resetInvalidVehicleSelection(){
-  const brand=$('#brand').value;
-  const model=$('#model').value;
-  const rows=(catalogByBrand.get(brand)||[]).filter(r=>r.model===model);
-  setVariantOptions(rows);
-  setOptions($('#year'),[],'Elegí versión');
+  refreshVersions();
 }
 function validatedSelection(){
   const brand=$('#brand').value;
@@ -216,14 +229,15 @@ function validatedSelection(){
 
   if(!brand)return {ok:false,message:'Elegí una marca para continuar.'};
   if(!model)return {ok:false,message:'Elegí un modelo para continuar.'};
+  if(!year)return {ok:false,message:'Elegí el año de tu vehículo para continuar.'};
 
   const entry=catalogById.get(variantId)||null;
 
-  if(!entry||entry.brand!==brand||entry.model!==model){
+  if(!entry||entry.brand!==brand||!currentModelGroup()?.entries.some(e=>e.id===entry.id)){
     return {
       ok:false,
       repair:true,
-      message:'La versión seleccionada no corresponde al modelo actual. Volvé a elegir la versión.'
+      message:'Elegí la versión de tu vehículo para continuar.'
     };
   }
 
@@ -238,7 +252,7 @@ function validatedSelection(){
 }
 function updateCoverageNote(){
   const el=$('#catalog-coverage');if(!el)return;const e=currentEntry();
-  if(!e){el.textContent='El catálogo combina la guía mensual con DNRPA para ampliar marcas, modelos y versiones.';el.dataset.tone='neutral';return;}
+  if(!e){el.textContent=$('#year').value?'Elegí la versión que figura en la documentación de tu vehículo.':'Buscá tu modelo y elegí el año para ver las versiones compatibles.';el.dataset.tone='neutral';return;}
   const hasM=(e.market_ids||[]).length>0,hasD=(e.dnrpa_ids||[]).length>0;
   if(hasM&&hasD){el.textContent='Cobertura combinada: referencia de mercado + coincidencia DNRPA.';el.dataset.tone='good';}
   else if(hasM){el.textContent='Disponible en la guía de mercado. DNRPA se buscará automáticamente al calcular.';el.dataset.tone='neutral';}
@@ -283,8 +297,9 @@ function historyPriceToARS(price,fx){
   if(!Number.isFinite(amount)||amount<=0)return NaN;
   return String(price[1]).toUpperCase()==='USD'?amount*fx:amount;
 }
-function historicalValueForPeriod(entry,year,fx,period){
+function historicalValueForPeriod(entry,year,fx,period,expectedCurrency){
   const rows=(historyByPeriodBrandModel.get(`${period.key}|${entry.brand}|${entry.model}`)||[])
+    .filter(row=>!expectedCurrency||String(row.prices?.[year]?.[1]).toUpperCase()===expectedCurrency)
     .map(row=>({row,value:historyPriceToARS(row.prices?.[year],fx)}))
     .filter(item=>Number.isFinite(item.value));
   if(!rows.length)return null;
@@ -326,11 +341,15 @@ function renderVehicleHistory(entry,year,km,fx,currentValue,currentEstimate){
   const periods=[...(marketHistoryData?.periods||[])].sort((a,b)=>String(a.key).localeCompare(String(b.key))).slice(-3);
   const currentKey=currentMarketPeriodKey();
   const factor=mileageFactor(year,km);
+  const expectedCurrency=String(currentEstimate?.exactPrice?.currency||'').toUpperCase();
   const points=periods.map((period,index)=>{
     if(period.key===currentKey){
       return {period,index,value:currentValue,kind:currentEstimate?.exactPrice?'direct':'current-estimate',basisCount:currentEstimate?.basisCount||1};
     }
-    const historical=historicalValueForPeriod(entry,year,fx,period);
+    // A source currency change can reflect an import correction, not a market
+    // movement. Compare the same source currency, and require a confirmed
+    // current currency for 0 km references before adding older points.
+    const historical=year==='0km'&&!expectedCurrency?null:historicalValueForPeriod(entry,year,fx,period,expectedCurrency);
     return historical?{period,index,value:historical.value*factor,kind:historical.kind,basisCount:historical.basisCount}:{period,index,value:NaN,kind:'missing',basisCount:0};
   });
   const available=points.filter(point=>Number.isFinite(point.value));
@@ -365,7 +384,7 @@ function renderVehicleHistory(entry,year,km,fx,currentValue,currentEstimate){
 
   const directCount=points.filter(point=>point.kind==='direct').length;
   $('#vehicle-history-note').textContent=available.length>1
-    ? `Valores mensuales comparables ajustados al kilometraje ingresado. ${directCount} período${directCount===1?'':'s'} con coincidencia de la misma versión; la cotización principal siempre usa el último mes disponible.`
+    ? `Valores mensuales comparables ajustados al kilometraje ingresado${expectedCurrency?'; se comparan referencias en la misma moneda de origen':''}. ${directCount} período${directCount===1?'':'s'} con coincidencia de la misma versión; la cotización principal siempre usa el último mes disponible.`
     : 'La serie comenzó a guardarse en agosto de 2026. Este vehículo todavía no tiene dos meses comparables; la cotización actual no se completa con datos inventados.';
 }
 

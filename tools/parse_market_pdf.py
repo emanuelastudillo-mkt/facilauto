@@ -13,6 +13,8 @@ BRAND_ALIASES = {
     'G W': 'GREAT WALL',
     'M BENZ': 'MERCEDES BENZ',
     'DFSK SERIE': 'DFSK',
+    'DS': 'DS AUTOMOBILES',
+    'MINI': 'MINI COOPER',
 }
 
 
@@ -54,6 +56,30 @@ def group_lines(words,tol=1.2):
     return lines
 
 
+def is_currency_note(word):
+    color=word.get('non_stroking_color')
+    return (isinstance(color,(tuple,list)) and len(color)==3
+            and color[1]>color[0]+.15 and color[1]>color[2]+.15)
+
+
+def heading_kind(page,word):
+    """Read the table's shaded headings, even when font names are encoded."""
+    x=(word['x0']+word['x1'])/2
+    y=(word['top']+word['bottom'])/2
+    for rect in page.rects:
+        if not (rect['x0']<=x<=rect['x1'] and rect['top']<=y<=rect['bottom']):
+            continue
+        color=rect.get('non_stroking_color')
+        if not isinstance(color,(tuple,list)) or len(color)!=3:
+            continue
+        red,green,blue=color
+        if red>.9 and .4<green<.8 and blue>green+.1:
+            return 'model'
+        if max(color)-min(color)<.02 and .5<red<.9:
+            return 'brand'
+    return ''
+
+
 def detect_columns(page):
     ws=page.extract_words(x_tolerance=1,y_tolerance=2)
     hdr=[w for w in ws if 130<w['top']<148]
@@ -69,14 +95,16 @@ def detect_columns(page):
     return cols
 
 
-def line_values(ws,cols):
+def line_values(ws,cols,raw_tokens=None):
     vals={}
     for w in ws:
         c=(w['x0']+w['x1'])/2
         nearest=min(cols,key=lambda k:abs(cols[k]-c))
         if abs(cols[nearest]-c)<=25:
             n=parse_number(w['text'])
-            if n is not None: vals[nearest]=n
+            if n is not None:
+                vals[nearest]=n
+                if raw_tokens is not None: raw_tokens[nearest]=w['text']
     return vals
 
 
@@ -84,6 +112,24 @@ def note_texts(pdf):
     # Use page text because some notes wrap (JEEP/RAM) and line-only parsing truncates the exception.
     notes=[]
     for page_no,page in enumerate(pdf.pages,start=1):
+        words=page.extract_words(x_tolerance=1,y_tolerance=2,extra_attrs=['non_stroking_color'])
+        note_words=[w for w in words if is_currency_note(w)]
+        if note_words:
+            # The November edition overlays green currency notes on table rows.
+            # Read those annotations separately so model text/prices do not enter rules.
+            note_lines=group_lines(note_words,tol=2)
+            blocks=[]
+            for line in note_lines:
+                text=' '.join(w['text'] for w in line['words'])
+                if blocks and line['top']-blocks[-1]['bottom']<8 and '0KM' not in text.upper() and 'EN US$' not in text.upper():
+                    blocks[-1]['text']+=' '+text
+                    blocks[-1]['bottom']=max(w['bottom'] for w in line['words'])
+                else:
+                    blocks.append({'text':text,'bottom':max(w['bottom'] for w in line['words'])})
+            for block in blocks:
+                if 'US$' in block['text'].upper() or '0KM' in block['text'].upper():
+                    notes.append({'page':page_no,'text':block['text'].strip()})
+            continue
         txt=page.extract_text(x_tolerance=1,y_tolerance=2) or ''
         compact=' '.join(txt.split())
         for m in re.finditer(r'([A-Z0-9&.\- ]{2,45}?)(?:\s+0KM)?\s+EN\s+US\$(?:\s+MENOS\s+([A-Z0-9&.\- ]{2,60}?))?(?=\s+Autos\s+-|\s+Visite\s+Nuestro|$)',compact,re.I):
@@ -110,6 +156,7 @@ def resolve_currency_rules(rows,notes):
         if b in brands: nb[norm(a)]=b
 
     all_usd_brands=set(); zero_usd_brands=set(); zero_usd_models={}; zero_usd_variant_contains={}; exceptions={}
+    zero_usd_ids=set(); unresolved_models={}
 
     def add_model_rule(target):
         nt=norm(target)
@@ -129,6 +176,23 @@ def resolve_currency_rules(rows,notes):
     for note in notes:
         up=note['text'].upper()
         is_zero='0KM' in up
+        if 'SPIRNTER' in up and 'EN PESOS' in up:
+            exceptions.setdefault('MERCEDES BENZ',set()).add('SPRINTER')
+            continue
+        if is_zero and 'US$' not in up and 'PESOS' not in up:
+            target=norm(up.split('0KM')[0].removeprefix('MODELO').strip())
+            for b,models in models_by_brand.items():
+                for m in models:
+                    if norm(m)==target or norm(m).startswith(target+' '):
+                        unresolved_models.setdefault(b,set()).add(m)
+            continue
+        if 'HIACE 2 PRIMEROS' in up:
+            candidates=[r for r in rows if r['brand']=='TOYOTA' and r['model']=='HIACE' and '0km' in r['raw_values']]
+            zero_usd_ids.update(r['id'] for r in candidates[:2])
+            continue
+        if 'YARIS 3P' in up:
+            zero_usd_variant_contains.setdefault('TOYOTA',[]).append(('YARIS','3P'))
+            continue
         # Strip known suffixes/continuations before target matching.
         before=re.split(r'\s+0KM\s+EN\s+US\$|\s+EN\s+US\$',up,1)[0].strip()
         target=before
@@ -152,10 +216,6 @@ def resolve_currency_rules(rows,notes):
             exceptions.setdefault('RAM',set()).update({'DAKOTA PICK - UP','RAMPAGE PICK -UP','RAMPAGE PICK - UP'})
 
         # Toyota source notes are model/subvariant-specific.
-        if 'HIACE 2 PRIMEROS' in up:
-            zero_usd_models.setdefault('TOYOTA',set()).add('HIACE')
-        if 'YARIS 3P' in up:
-            zero_usd_variant_contains.setdefault('TOYOTA',[]).append(('YARIS','3P'))
         if re.search(r'\bL\s+CRUISER\b',up): zero_usd_models.setdefault('TOYOTA',set()).add('LAND CRUISER')
         if re.search(r'\bRAV\b',up): zero_usd_models.setdefault('TOYOTA',set()).add('RAV - 4')
 
@@ -170,12 +230,15 @@ def resolve_currency_rules(rows,notes):
         'zero_km_usd_models':{b:sorted(v) for b,v in zero_usd_models.items()},
         'zero_km_usd_variant_contains':{b:v for b,v in zero_usd_variant_contains.items()},
         'zero_km_usd_exceptions':{b:sorted(v) for b,v in exceptions.items()},
+        'zero_km_usd_ids':sorted(zero_usd_ids),
+        'zero_km_unresolved_models':{b:sorted(v) for b,v in unresolved_models.items()},
         'notes':notes,
     }
 
 
 def is_zero_km_usd(row,rules):
     b=row['brand'];m=row['model'];v=row['variant']
+    if row['id'] in rules.get('zero_km_usd_ids',[]): return True
     if b in rules['zero_km_usd_brands']:
         ex={norm(x) for x in rules['zero_km_usd_exceptions'].get(b,[])}
         if norm(m) not in ex: return True
@@ -201,22 +264,25 @@ def parse_pdf(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
         cols=detect_columns(pdf.pages[0])
         for page_no,page in enumerate(pdf.pages,start=1):
-            words=page.extract_words(x_tolerance=1,y_tolerance=2,extra_attrs=['fontname','size'])
+            words=page.extract_words(x_tolerance=1,y_tolerance=2,extra_attrs=['fontname','size','non_stroking_color'])
             if page_no==1:
                 alltxt=' '.join(w['text'] for w in words if 90<w['top']<120)
                 m=re.search(rf'({MONTHS})\s+(20\d{{2}})',alltxt,re.I)
                 if m: report_month,report_year=m.group(1).title(),m.group(2)
-            lines=group_lines([w for w in words if w['top']>146])
+            lines=group_lines([w for w in words if w['top']>144 and not is_currency_note(w)])
             prepared=[]
             for line in lines:
-                ws=line['words'];left=[w for w in ws if w['x0']<300]
+                ws=line['words'];left=[w for w in ws if w['x0']<318]
                 if not left: continue
                 label=' '.join(w['text'] for w in left).strip()
-                vals=line_values(ws,cols)
+                raw_tokens={}
+                vals=line_values([w for w in ws if w['x0']>=318],cols,raw_tokens)
                 fonts=' '.join(w.get('fontname','') for w in left)
                 prepared.append({
                     'top':line['top'],'ws':ws,'left':left,'label':label,'vals':vals,
                     'italic':'Italic' in fonts,'bold':'Bold' in fonts,
+                    'heading':heading_kind(page,left[0]),
+                    'raw_tokens':raw_tokens,
                 })
             for i,item in enumerate(prepared):
                 label=item['label']; vals=item['vals']; left=item['left']; italic=item['italic']; bold=item['bold']
@@ -225,23 +291,41 @@ def parse_pdf(pdf_path):
                 if 'US$' in up or up.startswith('AUTOS - PICK UPS') or up.startswith('VISITE NUESTRO'):
                     continue
                 if not vals:
-                    if italic and left[0]['x0']<60:
+                    if item['heading']=='model' or (italic and left[0]['x0']<60):
                         model=label
                         continue
                     # Brand headings can be the final line of a page, with the first model on the
                     # following page. They are bold, non-italic and do not contain model digits.
-                    if bold and not italic and left[0]['x0']<60 and len(label)<=45 and not re.search(r'\d',label):
+                    if item['heading']=='brand' or (bold and not italic and left[0]['x0']<60 and len(label)<=45 and not re.search(r'\d',label)):
                         brand=label;model=''
                     continue
-                rows.append({'id':f'mkt-{page_no}-{len(rows)+1}','brand':brand,'model':model,'variant':label,'raw_values':vals,'page':page_no})
+                rows.append({'id':f'mkt-{page_no}-{len(rows)+1}','brand':brand,'model':model,'variant':label,'raw_values':vals,'raw_tokens':item['raw_tokens'],'page':page_no})
 
         notes=note_texts(pdf)
 
     # Remove malformed rows that were parsed before a brand/model could be established.
     rows=[r for r in rows if r['brand'] and r['model']]
     rules=resolve_currency_rules(rows,notes)
+    warnings=[]
     for r in rows:
-        r['prices']={y:build_price(raw,y,r,rules) for y,raw in r.pop('raw_values').items()}
+        r['prices']={}
+        raw_tokens=r.pop('raw_tokens')
+        for y,raw in r.pop('raw_values').items():
+            price=build_price(raw,y,r,rules)
+            reason=''
+            if y=='0km':
+                if r['model'] in rules.get('zero_km_unresolved_models',{}).get(r['brand'],[]):
+                    reason='La nota de 0 km no especifica la moneda.'
+                elif price['currency']=='USD' and re.fullmatch(r'\d+,\d',raw_tokens.get(y,'')):
+                    reason='La nota indica US$ pero la cifra usa el formato decimal de miles de pesos.'
+                elif price['currency']=='ARS' and re.fullmatch(r'\d{1,3}(,\d{3})+',raw_tokens.get(y,'')):
+                    reason='La cifra usa el formato de US$ pero no hay una nota de moneda aplicable.'
+            if reason:
+                warnings.append({'brand':r['brand'],'model':r['model'],'variant':r['variant'],'year':y,'raw':raw_tokens.get(y,''),'page':r['page'],'reason':reason})
+            else:
+                r['prices'][y]=price
+    quarantined_rows=[r for r in rows if not r['prices']]
+    rows=[r for r in rows if r['prices']]
 
     return {
         'source':'NuestrosAutos / Autos - Pick Ups - Todo Terreno - Utilitarios',
@@ -250,6 +334,8 @@ def parse_pdf(pdf_path):
         'generated_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),
         'default_currency_rule':'ARS values are expressed in thousands; US$ exceptions follow the notes printed in the PDF.',
         'currency_rules':rules,
+        'price_warnings':warnings,
+        'quarantined_rows':quarantined_rows,
         'rows':rows,
     }
 
@@ -259,3 +345,5 @@ if __name__=='__main__':
     out.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
     print(f"OK: {len(data['rows'])} variantes -> {out}")
     print(f"Marcas completas en US$: {len(data['currency_rules']['all_usd_brands'])}; 0km US$: {len(data['currency_rules']['zero_km_usd_brands'])}")
+    if data['price_warnings']:
+        print(f"REVISAR: {len(data['price_warnings'])} importes excluidos por moneda ambigua. Detalle en price_warnings del JSON.")

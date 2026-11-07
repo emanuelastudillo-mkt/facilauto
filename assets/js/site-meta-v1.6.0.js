@@ -63,6 +63,7 @@ async function loadSiteMeta() {
     window.FACIL_AUTO_SITE_META = meta;
     window.dispatchEvent(new CustomEvent('facilauto:site-meta', {detail: meta}));
   } catch (error) {
+    setText('#market-pulse-note', 'El resumen mensual no pudo cargarse. Recargá la página para volver a intentarlo.');
     console.warn('FACIL AUTO site metadata:', error);
   }
 }
